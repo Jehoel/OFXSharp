@@ -24,7 +24,7 @@ namespace OfxSharp
             this.Date                          = stmtTrn.RequireSingleElementChildText  ( "DTPOSTED"      ).MaybeParseOfxDateTime();
             this.TransactionInitializationDate = stmtTrn.GetSingleElementChildTextOrNull( "DTUSER"        ).MaybeParseOfxDateTime();
             this.FundAvaliabilityDate          = stmtTrn.GetSingleElementChildTextOrNull( "DTAVAIL"       ).MaybeParseOfxDateTime();
-            this.Amount                        = stmtTrn.RequireSingleElementChildText  ( "TRNAMT"        ).RequireParseDecimal( culture );
+            this.Amount                        = stmtTrn.RequireSingleElementChildText  ( "TRNAMT"        ).RequireParseOfxDecimal();
             this.TransactionId                 = stmtTrn.RequireSingleElementChildText  ( "FITID"         );
 
             this.IncorrectTransactionId        = stmtTrn.GetSingleElementChildOrNull( "CORRECTFITID"  )?.RequireSingleTextChildNode();

@@ -26,7 +26,7 @@ namespace OfxSharp
                 XmlElement ledgerbal = elementOrNull.AssertIsElementOneOf( "LEDGERBAL", "AVAILBAL" );
 
                 return new Balance(
-                    amount: ledgerbal.RequireSingleElementChildText  ("BALAMT").RequireParseDecimal( culture ),
+                    amount: ledgerbal.RequireSingleElementChildText  ("BALAMT").RequireParseOfxDecimal(),
                     asOf  : ledgerbal.GetSingleElementChildTextOrNull("DTASOF").RequireOptionalParseOfxDateTime()
                 );
             }
