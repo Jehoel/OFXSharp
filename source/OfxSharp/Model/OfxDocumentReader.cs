@@ -79,11 +79,11 @@ namespace OfxSharp
             Boolean? isChaseQfx = options.IsChaseQfx( header, doc );
             if( isChaseQfx.HasValue && isChaseQfx.Value )
             {
-                return OfxDocument.FromChaseQfxXmlElement( doc.DocumentElement );
+                return OfxDocument.FromChaseQfxXmlElement( doc.DocumentElement, options );
             }
             else
             {
-                return OfxDocument.FromOfxXmlElement( doc.DocumentElement );
+                return OfxDocument.FromOfxXmlElement( doc.DocumentElement, options );
             }
         }
 

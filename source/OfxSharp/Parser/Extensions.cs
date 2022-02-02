@@ -61,19 +61,34 @@ namespace OfxSharp
             return Enum.TryParse<TEnum>( s, ignoreCase: true, out TEnum value ) ? value : (TEnum?)null;
         }
 
-        public static Int32? TryParseInt32(this string s)
+        public static Int32? TryParseInt32(this string s, CultureInfo culture)
         {
-            return Int32.TryParse( s, NumberStyles.Integer, CultureInfo.InvariantCulture, out Int32 value ) ? value : (Int32?)null;
+            if( s       is null ) throw new ArgumentNullException( nameof( s ) );
+            if( culture is null ) throw new ArgumentNullException( nameof( culture ) );
+
+            //
+
+            return Int32.TryParse( s, NumberStyles.Integer, culture, out Int32 value ) ? value : (Int32?)null;
         }
 
-        public static Int32 RequireParseInt32(this string s)
+        /// <summary>This method always uses <see cref="CultureInfo.InvariantCulture"/>.</summary>
+        public static Int32 RequireParseInt32Inv(this string s)
         {
+            if( s       is null ) throw new ArgumentNullException( nameof( s ) );
+
+            //
+
             return Int32.Parse( s, NumberStyles.Integer, CultureInfo.InvariantCulture );
         }
 
-        public static Decimal RequireParseDecimal(this string s)
+        public static Decimal RequireParseDecimal(this string s, CultureInfo culture)
         {
-            return Decimal.Parse( s, NumberStyles.Any, CultureInfo.InvariantCulture );
+            if( s       is null ) throw new ArgumentNullException( nameof( s ) );
+            if( culture is null ) throw new ArgumentNullException( nameof( culture ) );
+
+            //
+
+            return Decimal.Parse( s, NumberStyles.Any, culture );
         }
 
         private static readonly XmlWriterSettings _xmlSettings = new XmlWriterSettings()
