@@ -9,7 +9,7 @@
     <Authors>jhollingworth, kevencarneiro, Jehoel</Authors>
     <Tags>OFX money</Tags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>3.0.0</Version>
+    <Version>3.0.1</Version>
     <Company></Company>
     <PackageReleaseNotes>1.0.0 - kevencarneiro's fork
 

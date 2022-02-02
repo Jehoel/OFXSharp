@@ -61,11 +61,11 @@ namespace OfxSharp.NETCore.Tests
             ofxDocument.Should().NotBeNull();
             ofxDocument.StatementStart.Should().Be(new DateTimeOffset(2019, 5, 9, 12, 0, 0, TimeSpan.Zero ) ); // "20190509120000" -> 2019-05-09 12:00:00
             ofxDocument.StatementEnd  .Should().Be(new DateTimeOffset(2019, 5, 9, 12, 0, 0, TimeSpan.Zero ) ); // "20190509120000" -> 2019-05-09 12:00:00
-            
+
             Account.BankAccount acc = ofxDocument.Account.Should().BeOfType<Account.BankAccount>().Subject;
             acc.AccountId.Trim().Should().Be("99999");
             acc.BankId   .Trim().Should().Be("0237");
-            
+
             ofxDocument.Transactions.Count.Should().Be(3);
             ofxDocument.Transactions.Sum(x => x.Amount).Should().Be(200755M);
         }
@@ -184,6 +184,32 @@ namespace OfxSharp.NETCore.Tests
                 AsertBankAccount( stmt, bankId: "USA", accountId: "7777777777", BankAccountType.SAVINGS );
                 AsertCommonSecondLudditeStatement( stmt, txnCount: 0, ledgerBal: 6.03M, availableBal: 0.04M );
             }
+        }
+
+        /// <summary>
+        /// This test exists because:
+        /// <list type="bullet">
+        /// <item>As of Q1 2022, Chase bank only offers QFX, not OFX, for transaction downloads - and QFX and OFX are meant to be mutually intelligible.</item>
+        /// <item>Chase's QFX files do not conform to the OFX 1.6 spec which handily trips-up most OFX parsers. (Details in subsequent bullets below)</item>
+        /// <item>1. There is no empty line between the OFX header and the root <c>&lt;OFX&gt;</c> element's open-tag.</item>
+        /// <item>2. There is no <c>&lt;BANKMSGSRSV1&gt;</c> element (instead it has a <c>&lt;CREDITCARDMSGSRSV1&gt;</c> element instead... which also does not conform to OFX 1.6 as that element should be a child of <c>&lt;&gt;</c>).</item>
+        /// </list>
+        /// </summary>
+        [Test]
+        public void Should_read_ChaseBankCreditCard_QFX_statements()
+        {
+            OfxDocument ofx = OfxDocumentReader.FromSgmlFile( filePath: @"Files\chase-credit-card.qfx", ChaseQfxAwareOfxDocumentOptions.Instance );
+            ofx.HasSingleStatement( out SingleStatementOfxDocument ofxDocument ).Should().BeTrue();
+
+            ofxDocument.Should().NotBeNull();
+            ofxDocument.StatementStart.Should().Be( new DateTimeOffset( 2022, 1, 1, 12, 0, 0, TimeSpan.Zero ) ); // "20220101120000" -> 2022-01-01 12:00:00
+            ofxDocument.StatementEnd  .Should().Be( new DateTimeOffset( 2022, 2, 1, 12, 0, 0, TimeSpan.Zero ) ); // "20220201120000" -> 2022-02-01 12:00:00
+
+            Account.CreditAccount acc = ofxDocument.Account.Should().BeOfType<Account.CreditAccount>().Subject; // These files also use `CCACCTFROM` instead of `BANKACCTFROM`, which only has `ACCTID` values, no BANKID nor ACCTTYPE.
+            acc.AccountId.Trim().Should().Be("1111880001112222");
+
+            ofxDocument.Transactions.Count.Should().Be(2);
+            ofxDocument.Transactions.Sum(x => x.Amount).Should().Be(-21.76M); // 2* -10.88
         }
 
         private static void AsertCommonSecondLudditeStatement( OfxStatementResponse stmt, Int32 txnCount, Decimal ledgerBal, Decimal? availableBal )
