@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 using System.Xml;
@@ -19,42 +20,74 @@ namespace OfxSharp
 
         #region Non-async
 
-        /// <summary></summary>
-        /// <param name="filePath"></param>
-        /// <param name="cultureOrNullForAutodetect">TODO: Use the &quot;LANGUAGE&quot; element to detect numeric formatting.</param>
-        /// <returns></returns>
-        public static OfxDocument FromSgmlFile( String filePath )//, CultureInfo cultureOrNullForAutodetect )
+        public static OfxDocument FromSgmlFile( FileInfo file ) => FromSgmlFile( file: file, optionsOrNull: null );
+
+        public static OfxDocument FromSgmlFile( FileInfo file, IOfxReaderOptions optionsOrNull )
         {
+            if( file is null ) throw new ArgumentNullException( nameof( file ) );
+
+            return FromSgmlFile( filePath: file.FullName, optionsOrNull );
+        }
+
+        //
+
+        public static OfxDocument FromSgmlFile( String filePath ) => FromSgmlFile( filePath: filePath, optionsOrNull: null );
+
+        public static OfxDocument FromSgmlFile( String filePath, IOfxReaderOptions optionsOrNull )
+        {
+            if( filePath is null ) throw new ArgumentNullException( nameof( filePath ) );
+
             using( FileStream fs = new FileStream( filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, FileOptions.SequentialScan ) )
             {
-                return FromSgmlFile( fs );
+                return FromSgmlFile( fs, optionsOrNull );
             }
         }
 
-        public static OfxDocument FromSgmlFile( Stream stream )
+        //
+
+        public static OfxDocument FromSgmlFile( Stream stream ) => FromSgmlFile( stream: stream, optionsOrNull: null );
+
+        public static OfxDocument FromSgmlFile( Stream stream, IOfxReaderOptions optionsOrNull )
         {
+            if( stream is null ) throw new ArgumentNullException( nameof( stream ) );
+
             using( StreamReader rdr = new StreamReader( stream ) )
             {
-                return FromSgmlFile( reader: rdr );
+                return FromSgmlFile( reader: rdr, optionsOrNull );
             }
         }
 
-        public static OfxDocument FromSgmlFile( TextReader reader )
+        //
+
+        public static OfxDocument FromSgmlFile( TextReader reader ) => FromSgmlFile( reader: reader, optionsOrNull: null );
+
+        public static OfxDocument FromSgmlFile( TextReader reader, IOfxReaderOptions optionsOrNull )
         {
             if( reader is null ) throw new ArgumentNullException( nameof( reader ) );
+
+            IOfxReaderOptions options = optionsOrNull ?? new DefaultOfxDocumentOptions();
 
             // Read the header:
             IReadOnlyDictionary<String,String> header = ReadOfxFileHeaderUntilStartOfSgml( reader );
 
             XmlDocument doc = ConvertSgmlToXml( reader );
 
-            #if DEBUG
+#if DEBUG
             String xmlDocString = doc.ToXmlString();
-            #endif
+#endif
 
-            return OfxDocument.FromXmlElement( doc.DocumentElement );
+            Boolean? isChaseQfx = options.IsChaseQfx( header, doc );
+            if( isChaseQfx.HasValue && isChaseQfx.Value )
+            {
+                return OfxDocument.FromChaseQfxXmlElement( doc.DocumentElement );
+            }
+            else
+            {
+                return OfxDocument.FromOfxXmlElement( doc.DocumentElement );
+            }
         }
 
+        /// <summary>This method assumes there is always a blank-line between the OFX header (the colon-bifurcated lines) and the <c>&gt;OFX&lt;</c> line.</summary>
         private static IReadOnlyDictionary<String,String> ReadOfxFileHeaderUntilStartOfSgml( TextReader reader )
         {
             Dictionary<String,String> sgmlHeaderValues = new Dictionary<String,String>();
