@@ -81,7 +81,7 @@ namespace OfxSharp
 
             _ = bankTranList.AssertIsElement("BANKTRANLIST"); // <-- This appears in both BANKMSGSRSV1 and CREDITCARDMSGSRSV1 btw.
 
-            foreach( XmlElement stmtTrn in bankTranList.GetChildNodes( "STMTTRN" ).Cast<XmlElement>() )
+            foreach( XmlElement stmtTrn in bankTranList.GetChildElements( "STMTTRN" ) )
             {
                 yield return new Transaction( stmtTrn: stmtTrn, defaultCurrency, culture );
             }

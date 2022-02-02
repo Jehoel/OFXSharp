@@ -46,7 +46,7 @@ namespace OfxSharp
 
             _ = bankMessageResponse.AssertIsElement( "BANKMSGSRSV1" );
 
-            foreach( XmlElement stmTrnResponse in bankMessageResponse.GetChildNodes("STMTTRNRS") )
+            foreach( XmlElement stmTrnResponse in bankMessageResponse.GetChildElements("STMTTRNRS") )
             {
                 XmlElement stmtTrnRs = stmTrnResponse.AssertIsElement("STMTTRNRS");
 
@@ -90,7 +90,7 @@ namespace OfxSharp
 
             _ = creditCardMessageResponse.AssertIsElement( "CREDITCARDMSGSRSV1" );
 
-            foreach( XmlElement stmTrnResponse in creditCardMessageResponse.GetChildNodes("CCSTMTTRNRS") )
+            foreach( XmlElement stmTrnResponse in creditCardMessageResponse.GetChildElements("CCSTMTTRNRS") )
             {
                 XmlElement stmtTrnRs = stmTrnResponse.AssertIsElement("CCSTMTTRNRS");
 
