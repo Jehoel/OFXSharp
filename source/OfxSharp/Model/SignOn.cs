@@ -5,11 +5,11 @@ namespace OfxSharp
 {
     public class SignOnResponse
     {
-        public static SignOnResponse FromXmlElement( XmlElement signonMsgsrsV1 )
+        public static SignOnResponse FromXmlElement( XmlElement signonMsgsRsV1 )
         {
-            _ = signonMsgsrsV1.AssertIsElement( "SIGNONMSGSRSV1" );
+            _ = signonMsgsRsV1.AssertIsElement( "SIGNONMSGSRSV1" );
 
-            XmlElement signOnResponse = signonMsgsrsV1.RequireSingleElementChild( "SONRS"  );
+            XmlElement signOnResponse = signonMsgsRsV1.RequireSingleElementChild( "SONRS"  );
             XmlElement status         = signOnResponse.RequireSingleElementChild( "STATUS" );
 
             return new SignOnResponse(

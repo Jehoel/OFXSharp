@@ -6,7 +6,7 @@ using System.Xml;
 namespace OfxSharp
 {
     /// <summary>Flattened view of STMTTRNRS and STMTRS. 11.4.1.2 Response &lt;STMTRS&gt;<br />
-    /// &quot;The <STMTRS> response must appear within a &lt;STMTTRNRS&gt; transaction wrapper.&quot; (the &quot;transaction&quot; refers to the OFX request/response transaction - not a bank transaction).</summary>
+    /// &quot;The &lt;STMTRS&gt; response must appear within a &lt;STMTTRNRS&gt; transaction wrapper.&quot; (the &quot;transaction&quot; refers to the OFX request/response transaction - not a bank transaction).</summary>
     public class OfxStatementResponse
     {
         public static OfxStatementResponse FromSTMTTRNRS( XmlElement stmtrnrs )
@@ -33,9 +33,34 @@ namespace OfxSharp
             );
         }
 
+        /// <summary>For Chase's OFX 1.6-violating QFX files, which have <c>&lt;CREDITCARDMSGSRSV1&gt;&lt;CCSTMTTRNRS&gt;&lt;CCSTMTRS&gt;</c> (and other differences) instead of <c>&lt;BANKMSGSRSV1&gt;&lt;STMTTRNRS&gt;&lt;STMTRS&gt;</c>.</summary>
+        public static OfxStatementResponse FromCCSTMTTRNRS( XmlElement ccStmtTrnRs )
+        {
+            _ = ccStmtTrnRs.AssertIsElement( "CCSTMTTRNRS", parentElementName: "CREDITCARDMSGSRSV1" );
+
+            XmlElement stmtrs    = ccStmtTrnRs.RequireSingleElementChild("CCSTMTRS");
+            XmlElement transList = stmtrs  .RequireSingleElementChild("BANKTRANLIST");
+
+            //
+
+            String defaultCurrency = stmtrs.RequireSingleElementChildText("CURDEF");
+
+            return new OfxStatementResponse(
+                trnUid           : ccStmtTrnRs.RequireSingleElementChildText("TRNUID").RequireParseInt32(),
+                responseStatus   : OfxStatus.FromXmlElement( ccStmtTrnRs.RequireSingleElementChild("STATUS") ),
+                defaultCurrency  : defaultCurrency,
+                accountFrom      : Account.FromXmlElementOrNull( stmtrs.GetSingleElementChildOrNull("CCACCTFROM") ),
+                transactionsStart: transList.RequireSingleElementChildText("DTSTART").RequireParseOfxDateTime(),
+                transactionsEnd  : transList.RequireSingleElementChildText("DTEND"  ).RequireParseOfxDateTime(),
+                transactions     : GetTransactions( transList, defaultCurrency ),
+                ledgerBalance    : Balance.FromXmlElementOrNull( stmtrs.GetSingleElementChildOrNull("LEDGERBAL") ),
+                availableBalance : Balance.FromXmlElementOrNull( stmtrs.GetSingleElementChildOrNull("AVAILBAL" ) )
+            );
+        }
+
         public static IEnumerable<Transaction> GetTransactions( XmlElement bankTranList, string defaultCurrency)
         {
-            _ = bankTranList.AssertIsElement("BANKTRANLIST");
+            _ = bankTranList.AssertIsElement("BANKTRANLIST"); // <-- This appears in both BANKMSGSRSV1 and CREDITCARDMSGSRSV1 btw.
 
             foreach( XmlElement stmtTrn in bankTranList.GetChildNodes( "STMTTRN" ).Cast<XmlElement>() )
             {
