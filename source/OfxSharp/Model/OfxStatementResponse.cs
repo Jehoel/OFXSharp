@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -29,7 +29,7 @@ namespace OfxSharp
             String defaultCurrency = stmtrs.RequireSingleElementChildText("CURDEF");
 
             return new OfxStatementResponse(
-                trnUid           : stmtrnrs.RequireSingleElementChildText("TRNUID").RequireParseInt32(),
+                trnUid           : stmtrnrs.RequireSingleElementChildText("TRNUID"),
                 responseStatus   : OfxStatus.FromXmlElement( stmtrnrs.RequireSingleElementChild("STATUS") ),
                 defaultCurrency  : defaultCurrency,
                 accountFrom      : Account.FromXmlElementOrNull( stmtrs.GetSingleElementChildOrNull("BANKACCTFROM") ),
@@ -56,7 +56,7 @@ namespace OfxSharp
             String defaultCurrency = stmtrs.RequireSingleElementChildText("CURDEF");
 
             return new OfxStatementResponse(
-                trnUid           : ccStmtTrnRs.RequireSingleElementChildText("TRNUID").RequireParseInt32(),
+                trnUid           : ccStmtTrnRs.RequireSingleElementChildText( "TRNUID" ),
                 responseStatus   : OfxStatus.FromXmlElement( ccStmtTrnRs.RequireSingleElementChild("STATUS") ),
                 defaultCurrency  : defaultCurrency,
                 accountFrom      : Account.FromXmlElementOrNull( stmtrs.GetSingleElementChildOrNull("CCACCTFROM") ),
@@ -88,7 +88,7 @@ namespace OfxSharp
         }
 
         public OfxStatementResponse(
-            Int32                    trnUid,
+            String                   trnUid,
             OfxStatus                responseStatus,
             String                   defaultCurrency,
             Account                  accountFrom,
@@ -111,8 +111,8 @@ namespace OfxSharp
             this.Transactions.AddRange( transactions );
         }
 
-        /// <summary>STMTTRNRS/TRNUID (OFX Request/Response Transaction ID - this is unrelated to bank transactions).</summary>
-        public Int32 OfxTransactionUniqueId { get; }
+        /// <summary>STMTTRNRS/TRNUID (OFX Request/Response Transaction ID - this is unrelated to bank transactions).<br />&quot;Client-Assigned Transaction UID&quot; - Described as an alphanumeric field (i.e. a <see cref="string"/>) with a maximum possible length of 36 chars. Values consisting of a single zero character have special meaning (in some OFX contexts, but not in .ofx files, surely?) and are valid.</summary>
+        public String OfxTransactionUniqueId { get; }
 
         /// <summary>STMTTRNRS/STATUS</summary>
         public OfxStatus ResponseStatus { get; }
