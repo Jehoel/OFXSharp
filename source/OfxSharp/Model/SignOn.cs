@@ -1,24 +1,34 @@
 using System;
+using System.Globalization;
 using System.Xml;
 
 namespace OfxSharp
 {
+    /// <summary><c>&lt;SIGNONMSGSRSV1&gt;</c> with child <c>&lt;SONRS&gt;</c> and more.</summary>
     public class SignOnResponse
     {
-        public static SignOnResponse FromXmlElement( XmlElement signonMsgsrsV1 )
+        /// <param name="signonMsgsRsV1">Required. Must be an <c></c> element.</param>
+        /// <exception cref="ArgumentNullException"></exception>
+        public static SignOnResponse FromXmlElement( XmlElement signonMsgsRsV1 )
         {
-            _ = signonMsgsrsV1.AssertIsElement( "SIGNONMSGSRSV1" );
+            if( signonMsgsRsV1 is null ) throw new ArgumentNullException( nameof( signonMsgsRsV1 ) );
 
-            XmlElement signOnResponse = signonMsgsrsV1.RequireSingleElementChild( "SONRS"  );
+            _ = signonMsgsRsV1.AssertIsElement( "SIGNONMSGSRSV1" );
+
+            XmlElement signOnResponse = signonMsgsRsV1.RequireSingleElementChild( "SONRS"  );
             XmlElement status         = signOnResponse.RequireSingleElementChild( "STATUS" );
 
             return new SignOnResponse(
-                statusCode    : status        .RequireSingleElementChildText( "CODE"     ).RequireParseInt32(),
-                statusSeverity: status        .RequireSingleElementChildText( "SEVERITY" ),
-                dtServer      : signOnResponse.RequireSingleElementChildText( "DTSERVER" ).RequireOptionalParseOfxDateTime(),
-                language      : signOnResponse.RequireSingleElementChildText( "LANGUAGE" ),
-                intuBid       : signOnResponse.GetSingleElementChildOrNull( "INTU.BID", allowDotsInElementName: true )?.RequireSingleTextChildNode() ?? null,
-                institution   : FinancialInstitution.FromXmlElementOrNull( signOnResponse.GetSingleElementChildOrNull("FI") )
+                statusCode        : status        .RequireSingleElementChildText( "CODE"     ).RequireParseInt32Inv(),
+                statusSeverity    : status        .RequireSingleElementChildText( "SEVERITY" ),
+                dtServer          : signOnResponse.RequireSingleElementChildText( "DTSERVER" ).RequireOptionalParseOfxDateTime(),
+                language          : signOnResponse.RequireSingleElementChildText( "LANGUAGE" ),
+
+                country           : signOnResponse.GetSingleElementChildTextOrNull( "COUNTRY" ),
+                institution       : FinancialInstitution.FromXmlElementOrNull( signOnResponse.GetSingleElementChildOrNull("FI") ),
+                profileLastUpdated: signOnResponse.GetSingleElementChildTextOrNull( "DTPROFUP" ).RequireOptionalParseOfxDateTime(),
+                accountLastUpdated: signOnResponse.GetSingleElementChildTextOrNull( "DTACCTUP" ).RequireOptionalParseOfxDateTime(),
+                intuBid           : signOnResponse.GetSingleElementChildOrNull    ( "INTU.BID", allowDotsInElementName: true )?.RequireSingleTextChildNode() ?? null
             );
         }
 
@@ -27,16 +37,26 @@ namespace OfxSharp
             String               statusSeverity,
             DateTimeOffset?      dtServer,
             String               language,
-            String               intuBid     = null,
-            FinancialInstitution institution = null
+
+            String               country            = null,
+            FinancialInstitution institution        = null,
+            DateTimeOffset?      profileLastUpdated = null,
+            DateTimeOffset?      accountLastUpdated = null,
+            String               intuBid            = null
         )
         {
-            this.StatusCode     = statusCode;
-            this.StatusSeverity = statusSeverity;
-            this.DTServer       = dtServer;
-            this.Language       = language;
-            this.IntuBid        = intuBid;
-            this.Institution    = institution;
+            // Required:
+            this.StatusCode         = statusCode;
+            this.StatusSeverity     = statusSeverity;
+            this.DTServer           = dtServer;
+            this.Language           = language;
+
+            // Optional:
+            this.Country            = country;
+            this.Institution        = institution;
+            this.ProfileLastUpdated = profileLastUpdated;
+            this.AccountLastUpdated = accountLastUpdated;
+            this.IntuBid            = intuBid;
         }
 
         #region OFX 1.6 Required members
@@ -50,15 +70,31 @@ namespace OfxSharp
         /// <summary>Required. All-zero (i.e. null) values accepted)<br />OFX/SIGNONMSGSRSV1/SONRS/DTSERVER</summary>
         public DateTimeOffset? DTServer { get; }
 
-        /// <summary>Required.<br />OFX/SIGNONMSGSRSV1/SONRS/LANGUAGE</summary>
+        /// <summary>
+        /// Required. OFX 1.6 states values are ISO-639 three-letter codes, e.g. &quot;ENG&quot; for English (but doesn't say if that's <c>en-US</c> or <c>en-GB</c>, any idea?) and &quot;POR&quot; for Portuguese.<br />
+        /// This value can be used to infer how numeric amounts should be parsed w.r.t. <see cref="System.Globalization.CultureInfo.NumberFormat"/><br />
+        /// <c>OFX/SIGNONMSGSRSV1/SONRS/LANGUAGE</c>
+        /// </summary>
         public string Language { get; }
 
         #endregion
 
         #region OFX 1.6 Optional members and extensions
 
-        /// <summary>Can be null.<br />OFX/SIGNONMSGSRSV1/SONRS/FI</summary>
+        /// <summary>
+        /// Optional. Can be <see langword="null"/>.<br />
+        /// The spec says: &quot;Specific country system used for the requests: 3-letter country code from ISO/DIS-3166. If this element is not present, the country system is USA.&quot;<br />
+        /// <c>OFX/SIGNONMSGSRSV1/SONRS/COUNTRY</c></summary>
+        public string Country { get; }
+
+        /// <summary>Optional. Can be <see langword="null"/>.<br /><c>OFX/SIGNONMSGSRSV1/SONRS/FI</c></summary>
         public FinancialInstitution Institution { get; }
+
+        /// <summary>Optional. Can be <see langword="null"/>.<br /><c>OFX/SIGNONMSGSRSV1/SONRS/DTPROFUP</c><br >&quot;Date and time of last update to profile information for any service supported by this FI&quot;</summary>
+        public DateTimeOffset? ProfileLastUpdated { get; }
+
+        /// <summary>Optional. Can be <see langword="null"/>.<br /><c>OFX/SIGNONMSGSRSV1/SONRS/DTACCTUP</c><br />&quot;Date and time of last update to account information (see Chapter8, “Activation &amp; Account Information”)&quot;</summary>
+        public DateTimeOffset? AccountLastUpdated { get; }
 
         /// <summary>Intuit BankId (proprietary to Quicken/Quickbooks).<br />Can be null.<br />OFX/SIGNONMSGSRSV1/SONRS/INTU.BID</summary>
         public string IntuBid { get; }

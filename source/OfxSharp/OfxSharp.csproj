@@ -9,14 +9,16 @@
     <Authors>jhollingworth, kevencarneiro, Jehoel</Authors>
     <Tags>OFX money</Tags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>3.0.0</Version>
+    <Version>4.1.0</Version>
     <Company></Company>
     <PackageReleaseNotes>1.0.0 - kevencarneiro's fork
 
 2.0.0 - Jehoel's fork. Adds support for multiple statements in a single OfxDocument. Legacy single-statement OfxDocuments are supported by `SingleStatementOfxDocument`.
 
 2.1.0 - Added `OfxDocumentFile`.
-3.0.0 - Breaking changes to the API design, but bugfixed some serious issues where XPath queries were wrong and returning the completely wrong elements. Erk!</PackageReleaseNotes>
+3.0.0 - Breaking changes to the API design, but bugfixed some serious issues where XPath queries were wrong and returning the completely wrong elements. Erk!
+4.0.0 - Apparently the Transaction Amount parser e.g. for (&lt;TRNAMT&gt;10,00) was parsing decimal values using commas as radix points incorrectly, and this was masked by tests that had incorrectly calculated totals because I assumed decimal parsing code could simply never fail... how wrong I was! Oh, and it supports Chase's bastardized QFX files now too. And other nice changes.
+4.1.0 - Needs more methods.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

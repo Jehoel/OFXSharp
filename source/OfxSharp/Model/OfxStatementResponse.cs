@@ -1,16 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Xml;
 
 namespace OfxSharp
 {
     /// <summary>Flattened view of STMTTRNRS and STMTRS. 11.4.1.2 Response &lt;STMTRS&gt;<br />
-    /// &quot;The <STMTRS> response must appear within a &lt;STMTTRNRS&gt; transaction wrapper.&quot; (the &quot;transaction&quot; refers to the OFX request/response transaction - not a bank transaction).</summary>
+    /// &quot;The &lt;STMTRS&gt; response must appear within a &lt;STMTTRNRS&gt; transaction wrapper.&quot; (the &quot;transaction&quot; refers to the OFX request/response transaction - not a bank transaction).</summary>
     public class OfxStatementResponse
     {
-        public static OfxStatementResponse FromSTMTTRNRS( XmlElement stmtrnrs )
+        /// <param name="stmtrnrs">Required. Cannot be <see langword="null"/>. Must be a <c>&lt;BANKMSGSRSV1&gt;</c> element.</param>
+        /// <param name="culture">Required. Cannot be <see langword="null"/>.</param>
+        public static OfxStatementResponse FromSTMTTRNRS( XmlElement stmtrnrs, CultureInfo culture )
         {
+            if( stmtrnrs is null ) throw new ArgumentNullException( nameof( stmtrnrs ) );
+            if( culture  is null ) throw new ArgumentNullException( nameof( culture ) );
+
+            //
+
             _ = stmtrnrs.AssertIsElement( "STMTTRNRS", parentElementName: "BANKMSGSRSV1" );
 
             XmlElement stmtrs    = stmtrnrs.RequireSingleElementChild("STMTRS");
@@ -21,30 +29,66 @@ namespace OfxSharp
             String defaultCurrency = stmtrs.RequireSingleElementChildText("CURDEF");
 
             return new OfxStatementResponse(
-                trnUid           : stmtrnrs.RequireSingleElementChildText("TRNUID").RequireParseInt32(),
+                trnUid           : stmtrnrs.RequireSingleElementChildText("TRNUID"),
                 responseStatus   : OfxStatus.FromXmlElement( stmtrnrs.RequireSingleElementChild("STATUS") ),
                 defaultCurrency  : defaultCurrency,
                 accountFrom      : Account.FromXmlElementOrNull( stmtrs.GetSingleElementChildOrNull("BANKACCTFROM") ),
                 transactionsStart: transList.RequireSingleElementChildText("DTSTART").RequireParseOfxDateTime(),
                 transactionsEnd  : transList.RequireSingleElementChildText("DTEND"  ).RequireParseOfxDateTime(),
-                transactions     : GetTransactions( transList, defaultCurrency ),
-                ledgerBalance    : Balance.FromXmlElementOrNull( stmtrs.GetSingleElementChildOrNull("LEDGERBAL") ),
-                availableBalance : Balance.FromXmlElementOrNull( stmtrs.GetSingleElementChildOrNull("AVAILBAL" ) )
+                transactions     : GetTransactions( transList, defaultCurrency, culture ),
+                ledgerBalance    : Balance.FromXmlElementOrNull( stmtrs.GetSingleElementChildOrNull("LEDGERBAL"), culture ),
+                availableBalance : Balance.FromXmlElementOrNull( stmtrs.GetSingleElementChildOrNull("AVAILBAL" ), culture )
             );
         }
 
-        public static IEnumerable<Transaction> GetTransactions( XmlElement bankTranList, string defaultCurrency)
+        /// <summary>For Chase's OFX 1.6-violating QFX files, which have <c>&lt;CREDITCARDMSGSRSV1&gt;&lt;CCSTMTTRNRS&gt;&lt;CCSTMTRS&gt;</c> (and other differences) instead of <c>&lt;BANKMSGSRSV1&gt;&lt;STMTTRNRS&gt;&lt;STMTRS&gt;</c>.</summary>
+        /// <param name="ccStmtTrnRs">Required. Cannot be <see langword="null"/>. Must be a <c>&lt;CCSTMTTRNRS&gt;</c> element that's an immediate child of a <c>&lt;CREDITCARDMSGSRSV1&gt;</c>.</param>
+        /// <param name="culture">Required. Cannot be <see langword="null"/>.</param>
+        public static OfxStatementResponse FromCCSTMTTRNRS( XmlElement ccStmtTrnRs, CultureInfo culture )
         {
-            _ = bankTranList.AssertIsElement("BANKTRANLIST");
+            _ = ccStmtTrnRs.AssertIsElement( "CCSTMTTRNRS", parentElementName: "CREDITCARDMSGSRSV1" );
 
-            foreach( XmlElement stmtTrn in bankTranList.GetChildNodes( "STMTTRN" ).Cast<XmlElement>() )
+            XmlElement stmtrs    = ccStmtTrnRs.RequireSingleElementChild("CCSTMTRS");
+            XmlElement transList = stmtrs  .RequireSingleElementChild("BANKTRANLIST");
+
+            //
+
+            String defaultCurrency = stmtrs.RequireSingleElementChildText("CURDEF");
+
+            return new OfxStatementResponse(
+                trnUid           : ccStmtTrnRs.RequireSingleElementChildText( "TRNUID" ),
+                responseStatus   : OfxStatus.FromXmlElement( ccStmtTrnRs.RequireSingleElementChild("STATUS") ),
+                defaultCurrency  : defaultCurrency,
+                accountFrom      : Account.FromXmlElementOrNull( stmtrs.GetSingleElementChildOrNull("CCACCTFROM") ),
+                transactionsStart: transList.RequireSingleElementChildText( "DTSTART").RequireParseOfxDateTime(),
+                transactionsEnd  : transList.RequireSingleElementChildText( "DTEND"  ).RequireParseOfxDateTime(),
+                transactions     : GetTransactions( transList, defaultCurrency, culture ),
+                ledgerBalance    : Balance.FromXmlElementOrNull( stmtrs.GetSingleElementChildOrNull("LEDGERBAL"), culture ),
+                availableBalance : Balance.FromXmlElementOrNull( stmtrs.GetSingleElementChildOrNull("AVAILBAL" ), culture )
+            );
+        }
+
+        /// <param name="bankTranList">Required. Cannot be <see langword="null"/>. Must be a <c>&lt;BANKTRANLIST&gt;</c> element.</param>
+        /// <param name="defaultCurrency">Required. Cannot be <see langword="null"/>.</param>
+        /// <param name="culture">Required. Cannot be <see langword="null"/>.</param>
+        public static IEnumerable<Transaction> GetTransactions( XmlElement bankTranList, string defaultCurrency, CultureInfo culture )
+        {
+            if( bankTranList     is null ) throw new ArgumentNullException( nameof( bankTranList ) );
+            if( defaultCurrency  is null ) throw new ArgumentNullException( nameof( defaultCurrency ) );
+            if( culture          is null ) throw new ArgumentNullException( nameof( culture ) );
+
+            //
+
+            _ = bankTranList.AssertIsElement("BANKTRANLIST"); // <-- This appears in both BANKMSGSRSV1 and CREDITCARDMSGSRSV1 btw.
+
+            foreach( XmlElement stmtTrn in bankTranList.GetChildElements( "STMTTRN" ) )
             {
-                yield return new Transaction( stmtTrn: stmtTrn, defaultCurrency );
+                yield return new Transaction( stmtTrn: stmtTrn, defaultCurrency, culture );
             }
         }
 
         public OfxStatementResponse(
-            Int32                    trnUid,
+            String                   trnUid,
             OfxStatus                responseStatus,
             String                   defaultCurrency,
             Account                  accountFrom,
@@ -67,8 +111,8 @@ namespace OfxSharp
             this.Transactions.AddRange( transactions );
         }
 
-        /// <summary>STMTTRNRS/TRNUID (OFX Request/Response Transaction ID - this is unrelated to bank transactions).</summary>
-        public Int32 OfxTransactionUniqueId { get; }
+        /// <summary>STMTTRNRS/TRNUID (OFX Request/Response Transaction ID - this is unrelated to bank transactions).<br />&quot;Client-Assigned Transaction UID&quot; - Described as an alphanumeric field (i.e. a <see cref="string"/>) with a maximum possible length of 36 chars. Values consisting of a single zero character have special meaning (in some OFX contexts, but not in .ofx files, surely?) and are valid.</summary>
+        public String OfxTransactionUniqueId { get; }
 
         /// <summary>STMTTRNRS/STATUS</summary>
         public OfxStatus ResponseStatus { get; }

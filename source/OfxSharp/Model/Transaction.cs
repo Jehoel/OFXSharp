@@ -7,23 +7,24 @@ namespace OfxSharp
     /// <summary>&lt;STMTTRN&gt;</summary>
     public class Transaction
     {
-        /// <summary></summary>
         /// <param name="stmtTrn">&lt;STMTTRN&gt;, a child of &lt;BANKTRANLIST&gt;</param>
-        /// <param name="defaultCurrency"></param>
-        public Transaction( XmlElement stmtTrn, string defaultCurrency )
+        /// <param name="defaultCurrency">Required. Cannot be <see langword="null"/>. Can be empty or whitespace (though that might violate OFX 1.6 if it prescribes a specific format for currency codes?)</param>
+        /// <param name="culture">Required. Cannot be <see langword="null"/>.</param>
+        public Transaction( XmlElement stmtTrn, string defaultCurrency, CultureInfo culture )
         {
-            if( stmtTrn is null ) throw new ArgumentNullException( nameof( stmtTrn ) );
+            if( stmtTrn         is null ) throw new ArgumentNullException( nameof( stmtTrn ) );
             if( defaultCurrency is null ) throw new ArgumentNullException( nameof( defaultCurrency ) );
+            if( culture         is null ) throw new ArgumentNullException( nameof( culture ) );
 
             _ = stmtTrn.AssertIsElement( "STMTTRN", parentElementName: "BANKTRANLIST" );
 
             //
 
             this.TransType                     = stmtTrn.RequireSingleElementChildText  ( "TRNTYPE"       ).ParseEnum<OfxTransactionType>();
-            this.Date                          = stmtTrn.RequireSingleElementChildText  ( "DTPOSTED"      ).MaybeParseOfxDateTime();
-            this.TransactionInitializationDate = stmtTrn.GetSingleElementChildTextOrNull( "DTUSER"        ).MaybeParseOfxDateTime();
-            this.FundAvaliabilityDate          = stmtTrn.GetSingleElementChildTextOrNull( "DTAVAIL"       ).MaybeParseOfxDateTime();
-            this.Amount                        = stmtTrn.RequireSingleElementChildText  ( "TRNAMT"        ).RequireParseDecimal();
+            this.Date                          = stmtTrn.RequireSingleElementChildText  ( "DTPOSTED"      ).RequireOptionalParseOfxDateTime();
+            this.TransactionInitializationDate = stmtTrn.GetSingleElementChildTextOrNull( "DTUSER"        ).RequireOptionalParseOfxDateTime();
+            this.FundAvaliabilityDate          = stmtTrn.GetSingleElementChildTextOrNull( "DTAVAIL"       ).RequireOptionalParseOfxDateTime();
+            this.Amount                        = stmtTrn.RequireSingleElementChildText  ( "TRNAMT"        ).RequireParseOfxDecimal();
             this.TransactionId                 = stmtTrn.RequireSingleElementChildText  ( "FITID"         );
 
             this.IncorrectTransactionId        = stmtTrn.GetSingleElementChildOrNull( "CORRECTFITID"  )?.RequireSingleTextChildNode();
@@ -110,7 +111,10 @@ namespace OfxSharp
         /// <summary><c>CURRENCY</c></summary>
         public string Currency { get; }
 
-        /// <summary><c>CURDEF</c> (defined outside of &lt;STMTTRN&gt;)</summary>
+        /// <summary>
+        /// <c>CURDEF</c> (defined outside of &lt;STMTTRN&gt;)<br />
+        /// Will never be <see langword="null"/>. Can be an empty or whitespace string (though that might violate OFX 1.6 if it prescribes a specific format for currency codes?)
+        /// </summary>
         public string DefaultCurrency { get; }
 
         /// <summary><c>CURRENCY</c> or <c>ORIGCURRENCY</c> - or the default currency string value passed into <see cref="Transaction"/>'s constructor.</summary>
