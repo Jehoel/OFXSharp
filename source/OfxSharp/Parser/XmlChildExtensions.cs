@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
@@ -132,6 +132,7 @@ namespace OfxSharp
             return element.RequireSingleElementChild( childElementName ).RequireSingleTextChildNode();
         }
 
+        /// <summary>Consider chaining this method directly to <see cref="OfxDateTime.RequireOptionalParseOfxDateTime(String)"/>.</summary>
         public static String GetSingleElementChildTextOrNull( this XmlElement element, String childElementName )
         {
             return element.GetSingleElementChildOrNull( childElementName )?.RequireSingleTextChildNode();

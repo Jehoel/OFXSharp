@@ -14,27 +14,10 @@ namespace OfxSharp
         private static readonly Regex _dateTimeMSFmt  = new Regex( @"^(?<year>\d\d\d\d)(?<month>\d\d)(?<day>\d\d)(?<hours>\d\d)(?<minutes>\d\d)(?<seconds>\d\d)\.(?<ms>\d\d\d)$"                , _o ); // Assume UTC.
         private static readonly Regex _dateTimeMSZFmt = new Regex( @"^(?<year>\d\d\d\d)(?<month>\d\d)(?<day>\d\d)(?<hours>\d\d)(?<minutes>\d\d)(?<seconds>\d\d)\.(?<ms>\d\d\d)\[(?<zone>.+?)\]$", _o ); // Zone is specified.
         private static readonly Regex _dateTimeZFmt   = new Regex( @"^(?<year>\d\d\d\d)(?<month>\d\d)(?<day>\d\d)(?<hours>\d\d)(?<minutes>\d\d)(?<seconds>\d\d)\[(?<zone>.+?)\]$"               , _o ); // Zone is specified.
-    
+
         private static readonly Regex _zoneFmt        = new Regex( @"^(?<offset>(?<hours>(?:\-|\+)?\d+)(?:\.(?<minutes>\d\d))?)(?<name>:\w+)?$", _o ); // `[gmt offset:tz name]`, e.g. "[-5:EST]", "[-5.50:EST]", "[+12.12:WTF]", etc. The GMT Offset may be fractional. The OFX spec requires the zone name, but as it's not useful I see no harm in making the zone-name part optional.
 
         private static Int32 ParseInt32( String text ) => Int32.Parse( text, NumberStyles.Integer, CultureInfo.InvariantCulture );
-
-        /// <summary>Returns null if <paramref name="s"/> cannot be parsed as an OFX date or datetime - or if the input represents a null value.</summary>
-        public static DateTimeOffset? MaybeParseOfxDateTime( this String s )
-        {
-            if( String.IsNullOrWhiteSpace( s ) )
-            {
-                return null;
-            }
-            else if( TryParseOfxDateTime( s, out DateTimeOffset? value, errorMessage: out _ ) )
-            {
-                return value;
-            }
-            else
-            {
-                return null;
-            }
-        }
 
         /// <summary>Throws a <see cref="FormatException"/> if <paramref name="s"/> cannot be parsed as an OFX date or datetime.</summary>
         public static DateTimeOffset RequireParseOfxDateTime( this String s )
@@ -45,7 +28,7 @@ namespace OfxSharp
                 {
                     return value.Value;
                 }
-                else 
+                else
                 {
                     throw new FormatException( message: "Encountered (syntactically valid) null OFX date/datetime when a non-null value is required." );
                 }
@@ -56,10 +39,21 @@ namespace OfxSharp
             }
         }
 
-        /// <summary>Throws a <see cref="FormatException"/> if <paramref name="s"/> cannot be parsed as an OFX date or datetime.</summary>
+        /// <summary>
+        /// If (<c>this</c> extension param) <paramref name="s"/> is <see langword="null"/> then this method returns <see langword="null"/> and does not throw.<br />
+        /// If <paramref name="s"/> can be parsed as an OFX date by <see cref="TryParseOfxDateTime"/> then that value will be returned, even if <see langword="null"/> (i.e. when <paramref name="s"/> is all-zeroes).<br />
+        /// If <paramref name="s"/> is non-empty/whitespace and CANNOT be parsed as an OFX date by <see cref="TryParseOfxDateTime"/> then this method will throw a <see cref="FormatException"/>.<br />
+        /// <br />
+        /// This method is intended to be chained immediately after <see cref="XmlChildExtensions.GetSingleElementChildTextOrNull"/>.
+        /// </summary>
         public static DateTimeOffset? RequireOptionalParseOfxDateTime( this String s )
         {
-            if( TryParseOfxDateTime( s, out DateTimeOffset? value, out String errorMessage ) )
+            // Unlike `TryParseOfxDateTime`, this `RequireOptionalParseOfxDateTime` method has its own rules for how to handle null/empty/whitespace strings (i.e. returning null instead of throwing):
+            if( String.IsNullOrWhiteSpace( s ) )
+            {
+                return null;
+            }
+            else if( TryParseOfxDateTime( s, out DateTimeOffset? value, out String errorMessage ) )
             {
                 return value;
             }
@@ -69,7 +63,11 @@ namespace OfxSharp
             }
         }
 
-        /// <summary>This method will accept all-zeroes as valid, in which cas e<paramref name="value"/> will be null and this method will return true (and <paramref name="errorMessage"/> will be <see langword="null"/>.</summary>
+        /// <summary>
+        /// The <paramref name="errorMessage"/> parameter is always set to <see langword="null"/> for all non-error conditions - but argh, can that happen when it returns true?
+        /// If <paramref name="s"/> is null/empty/whitespace then this method returns false.<br />
+        /// Note that this method will accept all-zeroes as valid, in which case this method will still return <see langword="true"/> *AND* <paramref name="value"/> will be <see langword="null"/>, and <paramref name="errorMessage"/> will also be <see langword="null"/>.
+        /// </summary>
         public static Boolean TryParseOfxDateTime( String s, out DateTimeOffset? value, out String errorMessage )
         {
             if( String.IsNullOrWhiteSpace( s ) )
@@ -96,25 +94,25 @@ namespace OfxSharp
                     return TryCreateDateTimeOffset( m, offset, out value, out errorMessage );
                 }
             }
-        
+
             m = _dateTimeMSFmt.Match( s );
             if( m.Success )
             {
                 return TryCreateDateTimeOffset( m, offset: TimeSpan.Zero, out value, out errorMessage );
             }
-        
+
             m = _dateTimeFmt.Match( s );
             if( m.Success )
             {
                 return TryCreateDateTimeOffset( m, offset: TimeSpan.Zero, out value, out errorMessage );
             }
-        
+
             m = _dateFmt.Match( s );
             if( m.Success )
             {
                 return TryCreateDateTimeOffset( m, offset: TimeSpan.Zero, out value, out errorMessage );
             }
-        
+
             m = _dateTimeZFmt.Match( s );
             if( m.Success )
             {
@@ -128,7 +126,7 @@ namespace OfxSharp
                     return TryCreateDateTimeOffset( m, offset, out value, out errorMessage );
                 }
             }
-            
+
             value        = default;
             errorMessage = "Unrecognized date-time format: \"" + s + "\"";
             return false;
@@ -203,7 +201,7 @@ namespace OfxSharp
             Int32 year        = m.Groups["year"   ] is Group yearGrp    && yearGrp   .Success ? ParseInt32( yearGrp   .Value ) : 0;
             Int32 month       = m.Groups["month"  ] is Group monthGrp   && monthGrp  .Success ? ParseInt32( monthGrp  .Value ) : 0;
             Int32 day         = m.Groups["day"    ] is Group dayGrp     && dayGrp    .Success ? ParseInt32( dayGrp    .Value ) : 0;
-            
+
             Int32 hour        = m.Groups["hours"  ] is Group hoursGrp   && hoursGrp  .Success ? ParseInt32( hoursGrp  .Value ) : 0;
             Int32 minute      = m.Groups["minutes"] is Group minutesGrp && minutesGrp.Success ? ParseInt32( minutesGrp.Value ) : 0;
             Int32 second      = m.Groups["seconds"] is Group secondsGrp && secondsGrp.Success ? ParseInt32( secondsGrp.Value ) : 0;
@@ -224,7 +222,7 @@ namespace OfxSharp
                     year       : year,
                     month      : month,
                     day        : day,
-                
+
                     hour       : hour,
                     minute     : minute,
                     second     : second,

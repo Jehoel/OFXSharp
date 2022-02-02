@@ -21,9 +21,9 @@ namespace OfxSharp
             //
 
             this.TransType                     = stmtTrn.RequireSingleElementChildText  ( "TRNTYPE"       ).ParseEnum<OfxTransactionType>();
-            this.Date                          = stmtTrn.RequireSingleElementChildText  ( "DTPOSTED"      ).MaybeParseOfxDateTime();
-            this.TransactionInitializationDate = stmtTrn.GetSingleElementChildTextOrNull( "DTUSER"        ).MaybeParseOfxDateTime();
-            this.FundAvaliabilityDate          = stmtTrn.GetSingleElementChildTextOrNull( "DTAVAIL"       ).MaybeParseOfxDateTime();
+            this.Date                          = stmtTrn.RequireSingleElementChildText  ( "DTPOSTED"      ).RequireOptionalParseOfxDateTime();
+            this.TransactionInitializationDate = stmtTrn.GetSingleElementChildTextOrNull( "DTUSER"        ).RequireOptionalParseOfxDateTime();
+            this.FundAvaliabilityDate          = stmtTrn.GetSingleElementChildTextOrNull( "DTAVAIL"       ).RequireOptionalParseOfxDateTime();
             this.Amount                        = stmtTrn.RequireSingleElementChildText  ( "TRNAMT"        ).RequireParseOfxDecimal();
             this.TransactionId                 = stmtTrn.RequireSingleElementChildText  ( "FITID"         );
 
