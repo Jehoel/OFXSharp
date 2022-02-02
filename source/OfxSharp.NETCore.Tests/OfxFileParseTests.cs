@@ -59,15 +59,38 @@ namespace OfxSharp.NETCore.Tests
             ofx.HasSingleStatement( out SingleStatementOfxDocument ofxDocument ).Should().BeTrue();
 
             ofxDocument.Should().NotBeNull();
-            ofxDocument.StatementStart.Should().Be(new DateTimeOffset(2019, 5, 9, 12, 0, 0, TimeSpan.Zero ) ); // "20190509120000" -> 2019-05-09 12:00:00
-            ofxDocument.StatementEnd  .Should().Be(new DateTimeOffset(2019, 5, 9, 12, 0, 0, TimeSpan.Zero ) ); // "20190509120000" -> 2019-05-09 12:00:00
+            ofxDocument.StatementStart.Should().Be( new DateTimeOffset(2019, 5, 9, 12, 0, 0, TimeSpan.Zero ) ); // "20190509120000" -> 2019-05-09 12:00:00
+            ofxDocument.StatementEnd  .Should().Be( new DateTimeOffset(2019, 5, 9, 12, 0, 0, TimeSpan.Zero ) ); // "20190509120000" -> 2019-05-09 12:00:00
 
             Account.BankAccount acc = ofxDocument.Account.Should().BeOfType<Account.BankAccount>().Subject;
             acc.AccountId.Trim().Should().Be("99999");
             acc.BankId   .Trim().Should().Be("0237");
 
             ofxDocument.Transactions.Count.Should().Be(3);
-            ofxDocument.Transactions.Sum(x => x.Amount).Should().Be(200755M);
+//          ofxDocument.Transactions.Sum(x => x.Amount).Should().Be(200755M); // <-- This is wrong... I hope I didn't get the test-value from the debugger...
+
+            DateTimeOffset _20190430120000 = new DateTimeOffset(2019, 4, 30, 12, 0, 0, TimeSpan.Zero );
+
+            ofxDocument.Transactions[0].TransType    .Should().Be( OfxTransactionType.CREDIT );
+            ofxDocument.Transactions[0].Date         .Should().Be( _20190430120000 );
+            ofxDocument.Transactions[0].Amount       .Should().Be( 10.0M ); // <-- This is to ensure that the "10,00" in the OFX file is parsed as "10.0M" as it's using continential european decimal formatting (i.e. commas for the radix point instead of a dot - note that digit-grouping isn't used in OFX (I think?) so digit-grouping chars (`,` in en-US but `.` in fr-FR) don't matter.
+            ofxDocument.Transactions[0].TransactionId.Should().Be( "N1013F" );
+            ofxDocument.Transactions[0].CheckNum     .Should().Be( "3243801" );
+            ofxDocument.Transactions[0].Memo         .Should().Be( "RESGATE INVEST" );
+
+            ofxDocument.Transactions[1].TransType    .Should().Be( OfxTransactionType.CREDIT );
+            ofxDocument.Transactions[1].Date         .Should().Be( _20190430120000 );
+            ofxDocument.Transactions[1].Amount       .Should().Be( 24783.31M ); // Stored as `<TRNAMT>24783,31`
+            ofxDocument.Transactions[1].TransactionId.Should().Be( "N10153" );
+            ofxDocument.Transactions[1].CheckNum     .Should().Be( "3243801" );
+            ofxDocument.Transactions[1].Memo         .Should().Be( "RESGATE INVEST" ); // Yeah, it's the same.
+
+            ofxDocument.Transactions[2].TransType    .Should().Be( OfxTransactionType.DEBIT );
+            ofxDocument.Transactions[2].Date         .Should().Be( _20190430120000 );
+            ofxDocument.Transactions[2].Amount       .Should().Be( -22785.76M ) ;
+            ofxDocument.Transactions[2].TransactionId.Should().Be( "N10167" );
+            ofxDocument.Transactions[2].CheckNum     .Should().Be( "936909" );
+            ofxDocument.Transactions[2].Memo         .Should().Be( "APLICACAO EM FUNDOS" );
         }
 
         [Test]
@@ -161,7 +184,7 @@ namespace OfxSharp.NETCore.Tests
 
             {
                 OfxStatementResponse stmt = ofx.Statements.Single( st => st.AccountFrom.AccountId == "5555555555555555" );
-                AsertBankAccount( stmt, bankId: "USA", accountId: "5555555555555555", BankAccountType.CREDITLINE ); // Even though this is a credit-card account with `<ACCTTYPE>CREDITLINE`, the bank's OFX lists it with `<BANKACCTFROM>` instead of `<CCACCTFROM>` so the Account subtype will still be BankAccount and not CreditAccount.
+                AsertBankAccount( stmt, bankId: "USA", accountId: "5555555555555555", BankAccountType.CREDITLINE ); // Even though this is a credit-card account with `<ACCTTYPE>CREDITLINE`, the bank's OFX lists it with `<BANKACCTFROM>` instead of `<CCACCTFROM>` so the Account subtype will still be BankAccount and not CreditAccount
                 AsertCommonSecondLudditeStatement( stmt, txnCount: 2, ledgerBal: -2276.68M, availableBal: null );
 
                 stmt.Transactions[0].Name.Should().Be( "Ext Credit Card Debit SOYLENT" );
