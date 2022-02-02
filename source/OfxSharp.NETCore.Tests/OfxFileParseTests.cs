@@ -31,12 +31,44 @@ namespace OfxSharp.NETCore.Tests
             acc.BankId   .Trim().Should().Be("0341");
 
             ofxDocument.Transactions.Count.Should().Be(3);
-            ofxDocument.Transactions.Sum(x => x.Amount).Should().Be(-644.44M);
+
+
+            DateTimeOffset _20131209100000 = new DateTimeOffset( 2013, 12,  9, 10, 00, 00, TimeSpan.FromHours(-3) );
+            DateTimeOffset _20131210100000 = new DateTimeOffset( 2013, 12, 10, 10, 00, 00, TimeSpan.FromHours(-3) );
+
+            //
+
+            ofxDocument.Transactions[0].TransType    .Should().Be( OfxTransactionType.DEBIT );
+            ofxDocument.Transactions[0].Date         .Should().Be( _20131209100000 );
+            ofxDocument.Transactions[0].Amount       .Should().Be( -666.66M ); // `<TRNAMT>-666.66`
+            ofxDocument.Transactions[0].TransactionId.Should().Be( "20131209001" );
+            ofxDocument.Transactions[0].CheckNum     .Should().Be( "20131209001" );
+//          ofxDocument.Transactions[0].Memo         .Should().Be( "RSHOP " ); // Note trailing whitespace - is it significant?
+            ofxDocument.Transactions[0].Memo         .Should().Be( "RSHOP" ); // Ah, the SGML-to-XML part erases insignificant trailing whitespace in #text nodes (but does it respect the DTD/XSD's declarations about whitespace significance?).
+
+            ofxDocument.Transactions[1].TransType    .Should().Be( OfxTransactionType.CREDIT );
+            ofxDocument.Transactions[1].Date         .Should().Be( _20131209100000 );
+            ofxDocument.Transactions[1].Amount       .Should().Be( 99.99M ); // Stored as `<TRNAMT>99.99`
+            ofxDocument.Transactions[1].TransactionId.Should().Be( "20131209002" );
+            ofxDocument.Transactions[1].CheckNum     .Should().Be( "20131209002" );
+            ofxDocument.Transactions[1].Memo         .Should().Be( "REND PAGO APLIC AUT MAIS" );
+
+            ofxDocument.Transactions[2].TransType    .Should().Be( OfxTransactionType.DEBIT );
+            ofxDocument.Transactions[2].Date         .Should().Be( _20131210100000 );
+            ofxDocument.Transactions[2].Amount       .Should().Be( -77.77M ) ;
+            ofxDocument.Transactions[2].TransactionId.Should().Be( "20131210001" );
+            ofxDocument.Transactions[2].CheckNum     .Should().Be( "20131210001" );
+//          ofxDocument.Transactions[2].Memo         .Should().Be( "SISDEB       " ); // more whitespace?
+            ofxDocument.Transactions[2].Memo         .Should().Be( "SISDEB" );
+
+            ofxDocument.Transactions.Sum(x => x.Amount).Should().Be(-644.44M); // "expected -644.44M, but found -64444M.", but where's that coming from?
         }
 
         [Test]
         public void Should_read_Santander_statements()
         {
+            const Decimal EXPECTED_TOTAL = ( -11.11M ) + ( -222.22M ) + ( -333.33M ); // == 566.66M
+
             OfxDocument ofx = OfxDocumentReader.FromSgmlFile( filePath: @"Files\santander.ofx" );
             ofx.HasSingleStatement( out SingleStatementOfxDocument ofxDocument ).Should().BeTrue();
 
@@ -49,7 +81,9 @@ namespace OfxSharp.NETCore.Tests
             acc.BankId   .Trim().Should().Be("033");
 
             ofxDocument.Transactions.Count.Should().Be(3);
-            ofxDocument.Transactions.Sum(x => x.Amount).Should().Be(-22566.44M);
+            Decimal actualTotal = ofxDocument.Transactions.Sum(x => x.Amount);
+
+            actualTotal.Should().Be( EXPECTED_TOTAL );
         }
 
         [Test]
@@ -104,7 +138,7 @@ namespace OfxSharp.NETCore.Tests
             ofx.SignOn.DTServer.Value.ShouldBe( y: 2019, m: 3, d: 8, hr: 2, min: 31, sec: 01, ms: 862, offsetMinutes: 0 );
             ofx.SignOn.Language.Should().Be( "ENG" );
             ofx.SignOn.Institution.Name.Should().Be( "Second Luddite Federal Credit Union" );
-            ofx.SignOn.Institution.FId.Should().Be( 9999 );
+            ofx.SignOn.Institution.FId.Should().Be( "9999" );
 
             ofx.Statements.Count.Should().Be( 7 );
 
@@ -237,7 +271,7 @@ namespace OfxSharp.NETCore.Tests
 
         private static void AsertCommonSecondLudditeStatement( OfxStatementResponse stmt, Int32 txnCount, Decimal ledgerBal, Decimal? availableBal )
         {
-            stmt.OfxTransactionUniqueId.Should().Be( 1 ); // They're all `<TRNUID>1` in the OFX, but is that correct?
+            stmt.OfxTransactionUniqueId.Should().Be( "1" ); // They're all `<TRNUID>1` in the OFX, but is that correct? UPDATE: Oh wow, read my comment at the bottom of this method.
             stmt.ResponseStatus.Code.Should().Be( 0 );
             stmt.ResponseStatus.Severity.Should().Be( "INFO" );
 
@@ -256,6 +290,14 @@ namespace OfxSharp.NETCore.Tests
                 stmt.AvailableBalance.Amount.Should().Be( availableBal );
                 stmt.AvailableBalance.AsOf.Value.ShouldBe( 2019, 3, 8, 2, 31, 1, 862, offsetMinutes: 0 );
             }
+
+            // Re: <TRNUID>
+            // The OFX 1.6 spec says:
+            // > "When a client originates a <TRNUID>, the value of the <TRNUID> is always set to a unique identifier"
+            // > "Servers can use <TRNUID>s to reject duplicate requests."
+            // > "Because multiple clients might be generating requests to the same server, transaction IDs must be unique across clients. Thus, <TRNUID> must be a globally unique ID."
+            // Do I smell a gaping wide security hole? Are they admitting that (contemporaneous) OFX processing systems *trusted* client-provided random arbitrary strings to identify (AND AUTHENTICATE!!!) the owners/originators of OFX messages... wow...
+            // Well, I can see it might be barely acceptable if the spec required clients to always use cryptographically-secure long random (and so unpredictable) TRNUID values, but this is not mentioned in the OFX 1.6 doc. UPDATE: Oh, it does have a minor advisory in a subsequent paragraph, but it's very, very weakly worded, ugh.
         }
 
         private static void AsertBankAccount( OfxStatementResponse stmt, String bankId, String accountId, BankAccountType bankAccountType )
