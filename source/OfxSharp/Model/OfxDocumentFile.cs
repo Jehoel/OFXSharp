@@ -12,14 +12,14 @@ namespace OfxSharp
         /// <summary>Returns a cached instance of <c>Encoding.GetEncoding( codepage: 1252 )</c>.</summary>
         public static Encoding Windows1252 { get; } = Encoding.GetEncoding( codepage: 1252 );
 
-        /// <summary></summary>
         /// <param name="ofxFileInfo"></param>
-        /// <param name="encoding">Can be null. When null this defaults to <see cref="Windows1252"/>.</param>
+        /// <param name="encoding">Can be <see langword="null"/>. When <see langword="null"/> this defaults to <see cref="Windows1252"/>.</param>
+        /// <param name="options">Can be <see langword="null"/>. When <see langword="null"/> this (eventually) defaults to <see cref="DefaultOfxDocumentOptions.Instance"/>.</param>
         /// <param name="cancellationToken">Not currently used. Will be used after <see cref="StreamReader"/> supports it. See https://github.com/dotnet/runtime/issues/20824</param>
-        public static async Task<OfxDocumentFile> ReadFileAsync( FileInfo ofxFileInfo, Encoding encoding = null, CancellationToken cancellationToken = default )
+        public static async Task<OfxDocumentFile> ReadFileAsync( FileInfo ofxFileInfo, Encoding encoding = null, IOfxReaderOptions options = null, CancellationToken cancellationToken = default )
         {
             if( ofxFileInfo is null ) throw new ArgumentNullException( nameof( ofxFileInfo ) );
-            
+
             if( encoding is null )
             {
                 encoding = Windows1252;
@@ -35,15 +35,18 @@ namespace OfxSharp
 
             using( StringReader fileTextStringReader = new StringReader( fileText ) )
             {
-                OfxDocument ofxDoc = OfxDocumentReader.FromSgmlFile( fileTextStringReader );
+                OfxDocument ofxDoc = OfxDocumentReader.FromSgmlFile( fileTextStringReader, options );
                 return new OfxDocumentFile( ofxDoc, ofxFileInfo );
             }
         }
 
-        public static OfxDocumentFile ReadFile( FileInfo ofxFileInfo, Encoding encoding = null )
+        /// <param name="ofxFileInfo"></param>
+        /// <param name="encoding">Can be <see langword="null"/>. When <see langword="null"/> this defaults to <see cref="Windows1252"/>.</param>
+        /// <param name="options">Can be <see langword="null"/>. When <see langword="null"/> this (eventually) defaults to <see cref="DefaultOfxDocumentOptions.Instance"/>.</param>
+        public static OfxDocumentFile ReadFile( FileInfo ofxFileInfo, Encoding encoding = null, IOfxReaderOptions options = null )
         {
             if( ofxFileInfo is null ) throw new ArgumentNullException( nameof( ofxFileInfo ) );
-            
+
             if( encoding is null )
             {
                 encoding = Windows1252;
@@ -54,7 +57,7 @@ namespace OfxSharp
 
             using( StringReader fileTextStringReader = new StringReader( fileText ) )
             {
-                OfxDocument ofxDoc = OfxDocumentReader.FromSgmlFile( fileTextStringReader );
+                OfxDocument ofxDoc = OfxDocumentReader.FromSgmlFile( fileTextStringReader, options );
                 return new OfxDocumentFile( ofxDoc, ofxFileInfo );
             }
         }

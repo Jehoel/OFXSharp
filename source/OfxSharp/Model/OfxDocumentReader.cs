@@ -59,8 +59,10 @@ namespace OfxSharp
 
         //
 
+        /// <summary>This method uses <see cref="DefaultOfxDocumentOptions.Instance"/> to see if <paramref name="reader"/> is for a Chase bastardized QFX file, in which case <see cref="FromChaseQfxXmlElement"/> is used, otherwise <see cref="FromOfxXmlElement"/> is used.</summary>
         public static OfxDocument FromSgmlFile( TextReader reader ) => FromSgmlFile( reader: reader, optionsOrNull: null );
 
+        /// <summary>This method uses <paramref name="optionsOrNull"/> (if null, then <see cref="DefaultOfxDocumentOptions.Instance"/> is used) to see if <paramref name="reader"/> is for a Chase bastardized QFX file, in which case <see cref="FromChaseQfxXmlElement"/> is used, otherwise <see cref="FromOfxXmlElement"/> is used.</summary>
         public static OfxDocument FromSgmlFile( TextReader reader, IOfxReaderOptions optionsOrNull )
         {
             if( reader is null ) throw new ArgumentNullException( nameof( reader ) );
