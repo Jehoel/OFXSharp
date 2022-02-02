@@ -90,6 +90,7 @@ namespace OfxSharp
 
             // A problem is that two separate OFX files will have `<LANGUAGE>POR`, but one file (bradesco.ofx) will use commas for the decimal point, but another file (itau.ofx) will use a dot. ARGH.
             // It turns out we don't need to pass around CultureInfo for decimal values: According to Wikipedia, *the entire world* only uses 1 of 4 possible chars as decimal separators:
+            // https://en.wikipedia.org/wiki/File:DecimalSeparator.svg
             // 1. '.' - dot / period / full-stop. en-US, en-GB, etc.
             // 2. ',' - comma                   . fr-FR, pt-BR, etc.
             // 3. ''' - apostrophe              . Canada, apparently.

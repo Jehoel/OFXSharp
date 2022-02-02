@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -112,22 +112,46 @@ namespace OfxSharp
 
                     if( line.IsEmpty() )
                     {
-                        //state = State.StartOfOfxSgml;
                         return sgmlHeaderValues;
+                    }
+                    else if( line.IndexOf( ':' ) > -1 )
+                    {
+                        // `line` should be either empty/whitespace, or a 2-tuple separated by a single colon, like this: `OLDFILEUID:NONE`.
+                        // Anything else is invalid so throw.
+
+                        String[] parts = line.Split( ':' );
+                        if( parts.Length == 2 )
+                        {
+                            String name  = parts[0];
+                            String value = parts[1];
+                            sgmlHeaderValues.Add( name, value );
+                        }
+                        else
+                        {
+                            throw new FormatException( message: "Expected OFX Header line to consist of a single colon bifurcating two non-empty strings, but encountered : \"" + line + "\" instead." );
+                        }
                     }
                     else
                     {
-                        String[] parts = line.Split(':');
-                        String name  = parts[0];
-                        String value = parts[1];
-                        sgmlHeaderValues.Add( name, value );
+                        throw new FormatException( message: "Expected OFX Header line to contain a colon character, but encountered : \"" + line + "\" instead." );
                     }
 
                     break;
 
                 case State.StartOfOfxSgml:
+                default:
                     throw new InvalidOperationException( "This state should never be entered." );
                 }
+
+                // HACK: Sometimes a QFX/OFX file (namely from Chase Bnka) won't have a blank-line separator between the OFX Header and the opening <OFX> tag - so use Peek() to check for `<`.
+                {
+                    Int32 nextChar = reader.Peek();
+                    if( nextChar == '<' )
+                    {
+                        return sgmlHeaderValues;
+                    }
+                }
+
             }
 
             throw new InvalidOperationException( "Reached end of OFX file without encountering end of OFX header." );
@@ -148,20 +172,20 @@ namespace OfxSharp
                 sgmlReader.Dtd                = ofxSgmlDtd;
 
                 // https://stackoverflow.com/questions/1346995/how-to-create-a-xmldocument-using-xmlwriter-in-net
-                XmlDocument doc = new XmlDocument(); 
-                using( XmlWriter xmlWriter = doc.CreateNavigator().AppendChild() ) 
-                { 
+                XmlDocument doc = new XmlDocument();
+                using( XmlWriter xmlWriter = doc.CreateNavigator().AppendChild() )
+                {
                     while( !sgmlReader.EOF )
                     {
                         xmlWriter.WriteNode( sgmlReader, defattr: true );
                     }
                 }
-                
+
                 return doc;
             }
-#pragma warning disable IDE0059 // Unnecessary assignment of a value
+#pragma warning disable IDE0059 // Unnecessary assignment of a value // The `ex` variable exists to assist debugging.
             catch( Exception ex )
-#pragma warning restore IDE0059 // Unnecessary assignment of a value
+#pragma warning restore IDE0059
             {
                 throw;
             }
@@ -178,7 +202,7 @@ namespace OfxSharp
             }
 
             // Example cribbed from https://github.com/lovettchris/SgmlReader/blob/363decf083dd847d18c4c765cf0b87598ca491a0/SgmlTests/Tests-Logic.cs
-            
+
             using( StringReader dtdReader = new StringReader( dtdText ) )
             {
                 SgmlDtd dtd = SgmlDtd.Parse(
