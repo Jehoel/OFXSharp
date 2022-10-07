@@ -7,7 +7,7 @@ namespace OfxSharp
     /// <summary><c>&lt;SIGNONMSGSRSV1&gt;</c> with child <c>&lt;SONRS&gt;</c> and more.</summary>
     public class SignOnResponse
     {
-        /// <param name="signonMsgsRsV1">Required. Must be an <c></c> element.</param>
+        /// <param name="signonMsgsRsV1">Required. Must be an <c>&lt;SIGNONMSGSRSV1&gt;</c> element.</param>
         /// <exception cref="ArgumentNullException"></exception>
         public static SignOnResponse FromXmlElement( XmlElement signonMsgsRsV1 )
         {
@@ -28,7 +28,10 @@ namespace OfxSharp
                 institution       : FinancialInstitution.FromXmlElementOrNull( signOnResponse.GetSingleElementChildOrNull("FI") ),
                 profileLastUpdated: signOnResponse.GetSingleElementChildTextOrNull( "DTPROFUP" ).RequireOptionalParseOfxDateTime(),
                 accountLastUpdated: signOnResponse.GetSingleElementChildTextOrNull( "DTACCTUP" ).RequireOptionalParseOfxDateTime(),
-                intuBid           : signOnResponse.GetSingleElementChildOrNull    ( "INTU.BID", allowDotsInElementName: true )?.RequireSingleTextChildNode() ?? null
+
+                // <INTU.BID> and <INTU.USERID> are in *.qfx files, not *.ofx files.
+                intuBId           : signOnResponse.GetSingleElementChildOrNull    ( "INTU.BID"   , allowDotsInElementName: true )?.RequireSingleTextChildNode() ?? null,
+                intuUserId        : signOnResponse.GetSingleElementChildOrNull    ( "INTU.USERID", allowDotsInElementName: true )?.RequireSingleTextChildNode() ?? null
             );
         }
 
@@ -42,7 +45,8 @@ namespace OfxSharp
             FinancialInstitution institution        = null,
             DateTimeOffset?      profileLastUpdated = null,
             DateTimeOffset?      accountLastUpdated = null,
-            String               intuBid            = null
+            String               intuBId            = null,
+            String               intuUserId         = null
         )
         {
             // Required:
@@ -56,7 +60,8 @@ namespace OfxSharp
             this.Institution        = institution;
             this.ProfileLastUpdated = profileLastUpdated;
             this.AccountLastUpdated = accountLastUpdated;
-            this.IntuBid            = intuBid;
+            this.IntuBId            = intuBId;
+            this.IntuUserId         = intuUserId;
         }
 
         #region OFX 1.6 Required members
@@ -96,8 +101,11 @@ namespace OfxSharp
         /// <summary>Optional. Can be <see langword="null"/>.<br /><c>OFX/SIGNONMSGSRSV1/SONRS/DTACCTUP</c><br />&quot;Date and time of last update to account information (see Chapter8, “Activation &amp; Account Information”)&quot;</summary>
         public DateTimeOffset? AccountLastUpdated { get; }
 
-        /// <summary>Intuit BankId (proprietary to Quicken/Quickbooks).<br />Can be null.<br />OFX/SIGNONMSGSRSV1/SONRS/INTU.BID</summary>
-        public string IntuBid { get; }
+        /// <summary>Intuit BankId (proprietary to Quicken/Quickbooks).<br />Can be null.<br /><c>OFX/SIGNONMSGSRSV1/SONRS/INTU.BID</c></summary>
+        public string IntuBId { get; }
+
+        /// <summary>Intuit UserId (proprietary to Quicken/Quickbooks).<br />Can be null.<br /><c>OFX/SIGNONMSGSRSV1/SONRS/INTU.USERID</c></summary>
+        public string IntuUserId { get; }
 
         #endregion
     }

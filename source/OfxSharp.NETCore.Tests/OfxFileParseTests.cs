@@ -311,6 +311,65 @@ namespace OfxSharp.NETCore.Tests
             bankAccount.AccountType    .Should().Be( AccountType.BANK );
             bankAccount.BankAccountType.Should().Be( bankAccountType );
         }
+
+        /// <summary>Tests for support for QFX's elements <c>&lt;INTU.BID&gt;</c> and <c>&lt;INTU.USERID&gt;</c> (neither of which are in OFX 1.6).</summary>
+        [Test]
+        public void Should_read_SecondLuddite_QFX_statements()
+        {
+            OfxDocument ofx = OfxDocumentReader.FromSgmlFile( filePath: @"Files\secondluddite.qfx" ); // <-- This
+            ofx.HasSingleStatement( out _ ).Should().BeFalse();
+
+            ofx.SignOn.StatusCode      .Should().Be( 0 );
+            ofx.SignOn.StatusSeverity  .Should().Be( "INFO" );
+            ofx.SignOn.DTServer.Value  .ShouldBe( y: 2022, m: 10, d: 6, hr: 22, min: 27, sec: 36, ms: 0, offsetMinutes: 0 );
+            ofx.SignOn.Language        .Should().Be( "ENG" );
+            ofx.SignOn.Institution.Name.Should().Be( "Second Luddite Federal Credit Union" );
+            ofx.SignOn.Institution.FId .Should().Be( "9999" );
+            ofx.SignOn.IntuBId         .Should().Be( "88888" );
+            ofx.SignOn.IntuUserId      .Should().Be( "BOBDOLE" );
+
+            ofx.Statements.Count.Should().Be( 5 );
+
+            //
+
+            ofx.Statements[0].AvailableBalance.Amount.Should().Be( 68.65M );
+            ofx.Statements[0].LedgerBalance   .Amount.Should().Be( 73.65M );
+
+            ofx.Statements[0].AccountFrom.AccountId  .Should().Be( "1111111111" );
+            ofx.Statements[0].AccountFrom.AccountType.Should().Be( "SAVINGS" );
+
+            //
+
+            ofx.Statements[1].AvailableBalance.Amount.Should().Be( 5652.55M );
+            ofx.Statements[1].LedgerBalance   .Amount.Should().Be( 5652.55M );
+
+            ofx.Statements[1].AccountFrom.AccountId  .Should().Be( "3333444455" );
+            ofx.Statements[1].AccountFrom.AccountType.Should().Be( "CHECKING" );
+
+            //
+
+            ofx.Statements[2].AvailableBalance.Amount.Should().Be( 93.51M );
+            ofx.Statements[2].LedgerBalance   .Amount.Should().Be( 93.51M );
+
+            ofx.Statements[2].AccountFrom.AccountId  .Should().Be( "2222333344" );
+            ofx.Statements[2].AccountFrom.AccountType.Should().Be( "CHECKING" );
+
+            //
+
+            ofx.Statements[3].AvailableBalance.Amount.Should().Be( 7.33M );
+            ofx.Statements[3].LedgerBalance   .Amount.Should().Be( 7.33M );
+
+            ofx.Statements[3].AccountFrom.AccountId  .Should().Be( "5555666677" );
+            ofx.Statements[3].AccountFrom.AccountType.Should().Be( "CHECKING" );
+
+            //
+
+            ofx.Statements[4].AvailableBalance.Should().BeNull();
+            ofx.Statements[4].LedgerBalance   .Amount.Should().Be( -412.16M );
+
+            ofx.Statements[4].AccountFrom.AccountId  .Should().Be( "1234123412341234" );
+            ofx.Statements[4].AccountFrom.AccountType.Should().Be( "CREDITLINE" );
+        }
     }
 
     public static class MoreAssertions

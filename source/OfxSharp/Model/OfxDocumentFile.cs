@@ -12,7 +12,7 @@ namespace OfxSharp
         /// <summary>Returns a cached instance of <c>Encoding.GetEncoding( codepage: 1252 )</c>.</summary>
         public static Encoding Windows1252 { get; } = Encoding.GetEncoding( codepage: 1252 );
 
-        /// <param name="ofxFileInfo"></param>
+        /// <param name="ofxFileInfo">Required. Cannot be <see langword="null"/>.</param>
         /// <param name="encoding">Can be <see langword="null"/>. When <see langword="null"/> this defaults to <see cref="Windows1252"/>.</param>
         /// <param name="options">Can be <see langword="null"/>. When <see langword="null"/> this (eventually) defaults to <see cref="DefaultOfxDocumentOptions.Instance"/>.</param>
         /// <param name="cancellationToken">Not currently used. Will be used after <see cref="StreamReader"/> supports it. See https://github.com/dotnet/runtime/issues/20824</param>
@@ -40,7 +40,7 @@ namespace OfxSharp
             }
         }
 
-        /// <param name="ofxFileInfo"></param>
+        /// <param name="ofxFileInfo">Required. Cannot be <see langword="null"/>.</param>
         /// <param name="encoding">Can be <see langword="null"/>. When <see langword="null"/> this defaults to <see cref="Windows1252"/>.</param>
         /// <param name="options">Can be <see langword="null"/>. When <see langword="null"/> this (eventually) defaults to <see cref="DefaultOfxDocumentOptions.Instance"/>.</param>
         public static OfxDocumentFile ReadFile( FileInfo ofxFileInfo, Encoding encoding = null, IOfxReaderOptions options = null )

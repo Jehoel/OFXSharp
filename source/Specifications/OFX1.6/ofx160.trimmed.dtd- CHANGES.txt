@@ -1,0 +1,55 @@
+
+1. Removed the initial `<!DOCTYPE OFX [` on the first line.
+
+2. Added QFX (but non-OFX) elements for `<INTU.BID>` and `<INTU.USERID>`:
+
+	```
+-	<!ELEMENT SONRS		- - (STATUS, DTSERVER, USERKEY?, TSKEYEXPIRE?, LANGUAGE, COUNTRY?, DTPROFUP?, DTACCTUP?, FI?, SESSCOOKIE?)>
++	<!ELEMENT SONRS		- - (STATUS, DTSERVER, USERKEY?, TSKEYEXPIRE?, LANGUAGE, COUNTRY?, DTPROFUP?, DTACCTUP?, FI?, INTU.BID?, INTU.USERID?, SESSCOOKIE?)>
+
++	<!ELEMENT INTU.BID    - o %BANKIDTYPE>
++	<!ELEMENT INTU.USERID - o %BANKIDTYPE>
+	```
+3. Removed CDATA option from some <!ENTITY> types to reduce VS errors:
+
+	From:
+	```
+	<!-- ampersand -->
+	<!ENTITY amp CDATA "&#38;">
+
+	<!-- greater than -->
+	<!ENTITY gt CDATA "&#62;">
+
+	<!-- less than -->
+	<!ENTITY lt CDATA "&#60;">
+	```
+
+	To:
+	```
+	<!-- ampersand -->
+	<!ENTITY amp "&#38;">
+
+	<!-- greater than -->
+	<!ENTITY gt "&#62;">
+
+	<!-- less than -->
+	<!ENTITY lt "&#60;">
+	```
+
+4. Removed trailing whitespace.
+5. Removed line-breaks inside DTD definitions, which I think makes it more readable (for the most part).
+
+-----
+
+DTD Syntax Reminder:
+
+* Visual Studio interprets *.dtd files as XML DTDs, not SGML DTDs, so it does not recognize the "- -" / "- O" / "O O" syntax for specifying start/end-tag options.
+
+* `<!ELEMENT {elementName} - - {content}>` - Open and close tags required.
+* `<!ELEMENT {elementName} - O {content}>` - Open tag required. Close tag optional.
+* `<!ELEMENT {elementName} O O {content}>` - Opan and close tags optional. (where is this used?)
+
+* Content syntax:
+
+	* `()` - Defines a group.
+	* ``
