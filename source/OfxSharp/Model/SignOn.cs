@@ -36,17 +36,17 @@ namespace OfxSharp
         }
 
         public SignOnResponse(
-            Int32                statusCode,
-            String               statusSeverity,
-            DateTimeOffset?      dtServer,
-            String               language,
+            Int32                 statusCode,
+            String                statusSeverity,
+            DateTimeOffset?       dtServer,
+            String                language,
 
-            String               country            = null,
-            FinancialInstitution institution        = null,
-            DateTimeOffset?      profileLastUpdated = null,
-            DateTimeOffset?      accountLastUpdated = null,
-            String               intuBId            = null,
-            String               intuUserId         = null
+            String?               country            = null,
+            FinancialInstitution? institution        = null,
+            DateTimeOffset?       profileLastUpdated = null,
+            DateTimeOffset?       accountLastUpdated = null,
+            String?               intuBId            = null,
+            String?               intuUserId         = null
         )
         {
             // Required:
@@ -90,10 +90,10 @@ namespace OfxSharp
         /// Optional. Can be <see langword="null"/>.<br />
         /// The spec says: &quot;Specific country system used for the requests: 3-letter country code from ISO/DIS-3166. If this element is not present, the country system is USA.&quot;<br />
         /// <c>OFX/SIGNONMSGSRSV1/SONRS/COUNTRY</c></summary>
-        public string Country { get; }
+        public string? Country { get; }
 
         /// <summary>Optional. Can be <see langword="null"/>.<br /><c>OFX/SIGNONMSGSRSV1/SONRS/FI</c></summary>
-        public FinancialInstitution Institution { get; }
+        public FinancialInstitution? Institution { get; }
 
         /// <summary>Optional. Can be <see langword="null"/>.<br /><c>OFX/SIGNONMSGSRSV1/SONRS/DTPROFUP</c><br >&quot;Date and time of last update to profile information for any service supported by this FI&quot;</summary>
         public DateTimeOffset? ProfileLastUpdated { get; }
@@ -101,11 +101,15 @@ namespace OfxSharp
         /// <summary>Optional. Can be <see langword="null"/>.<br /><c>OFX/SIGNONMSGSRSV1/SONRS/DTACCTUP</c><br />&quot;Date and time of last update to account information (see Chapter8, “Activation &amp; Account Information”)&quot;</summary>
         public DateTimeOffset? AccountLastUpdated { get; }
 
+        #endregion
+
+        #region QFX extensions
+
         /// <summary>Intuit BankId (proprietary to Quicken/Quickbooks).<br />Can be null.<br /><c>OFX/SIGNONMSGSRSV1/SONRS/INTU.BID</c></summary>
-        public string IntuBId { get; }
+        public string? IntuBId { get; }
 
         /// <summary>Intuit UserId (proprietary to Quicken/Quickbooks).<br />Can be null.<br /><c>OFX/SIGNONMSGSRSV1/SONRS/INTU.USERID</c></summary>
-        public string IntuUserId { get; }
+        public string? IntuUserId { get; }
 
         #endregion
     }

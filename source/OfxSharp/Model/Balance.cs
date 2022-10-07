@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Xml;
 
@@ -7,11 +8,22 @@ namespace OfxSharp
     /// <summary>LEDGERBAL, AVAILBAL</summary>
     public class Balance
     {
+        public static Balance FromXmlElement( XmlNode element, CultureInfo culture )
+        {
+            if( element is null ) throw new ArgumentNullException( nameof( element ) );
+            if( culture is null ) throw new ArgumentNullException( nameof( culture ) );
+
+            //
+
+            return FromXmlElementOrNull( elementOrNull: element, culture: culture );
+        }
+
         /// <summary>Returns <see langword="null"/> when <paramref name="elementOrNull"/> is <see langword="null"/>.</summary>
         /// <param name="elementOrNull">Can be <see langword="null"/>.</param>
         /// <param name="culture">Must not be <see langword="null"/>.</param>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="culture"/> is <see langword="null"/>.</exception>
-        public static Balance FromXmlElementOrNull( XmlNode elementOrNull, CultureInfo culture )
+        [return: NotNullIfNotNull( "elementOrNull" )]
+        public static Balance? FromXmlElementOrNull( XmlNode? elementOrNull, CultureInfo culture )
         {
             if( culture is null ) throw new ArgumentNullException( nameof( culture ) );
 

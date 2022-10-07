@@ -21,54 +21,54 @@ namespace OfxSharp
 
         #region Non-async
 
-        public static OfxDocument FromSgmlFile( FileInfo file ) => FromSgmlFile( file: file, optionsOrNull: null );
+        public static OfxDocument FromSgmlFile( FileInfo file ) => FromSgmlFile( file: file, options: null );
 
-        public static OfxDocument FromSgmlFile( FileInfo file, IOfxReaderOptions optionsOrNull )
+        public static OfxDocument FromSgmlFile( FileInfo file, IOfxReaderOptions? options )
         {
             if( file is null ) throw new ArgumentNullException( nameof( file ) );
 
-            return FromSgmlFile( filePath: file.FullName, optionsOrNull );
+            return FromSgmlFile( filePath: file.FullName, options );
         }
 
         //
 
-        public static OfxDocument FromSgmlFile( String filePath ) => FromSgmlFile( filePath: filePath, optionsOrNull: null );
+        public static OfxDocument FromSgmlFile( String filePath ) => FromSgmlFile( filePath: filePath, options: null );
 
-        public static OfxDocument FromSgmlFile( String filePath, IOfxReaderOptions optionsOrNull )
+        public static OfxDocument FromSgmlFile( String filePath, IOfxReaderOptions? options )
         {
             if( filePath is null ) throw new ArgumentNullException( nameof( filePath ) );
 
             using( FileStream fs = new FileStream( filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, FileOptions.SequentialScan ) )
             {
-                return FromSgmlFile( fs, optionsOrNull );
+                return FromSgmlFile( fs, options );
             }
         }
 
         //
 
-        public static OfxDocument FromSgmlFile( Stream stream ) => FromSgmlFile( stream: stream, optionsOrNull: null );
+        public static OfxDocument FromSgmlFile( Stream stream ) => FromSgmlFile( stream: stream, options: null );
 
-        public static OfxDocument FromSgmlFile( Stream stream, IOfxReaderOptions optionsOrNull )
+        public static OfxDocument FromSgmlFile( Stream stream, IOfxReaderOptions? options )
         {
             if( stream is null ) throw new ArgumentNullException( nameof( stream ) );
 
             using( StreamReader rdr = new StreamReader( stream ) )
             {
-                return FromSgmlFile( reader: rdr, optionsOrNull );
+                return FromSgmlFile( reader: rdr, options );
             }
         }
 
         //
 
         /// <summary>This method uses <see cref="DefaultOfxDocumentOptions.Instance"/> to see if <paramref name="reader"/> is for a Chase bastardized QFX file, in which case <see cref="FromChaseQfxXmlElement"/> is used, otherwise <see cref="FromOfxXmlElement"/> is used.</summary>
-        public static OfxDocument FromSgmlFile( TextReader reader ) => FromSgmlFile( reader: reader, optionsOrNull: null );
+        public static OfxDocument FromSgmlFile( TextReader reader ) => FromSgmlFile( reader: reader, options: null );
 
         /// <summary>This method uses <paramref name="optionsOrNull"/> (if null, then <see cref="DefaultOfxDocumentOptions.Instance"/> is used) to see if <paramref name="reader"/> is for a Chase bastardized QFX file, in which case <see cref="FromChaseQfxXmlElement"/> is used, otherwise <see cref="FromOfxXmlElement"/> is used.</summary>
-        public static OfxDocument FromSgmlFile( TextReader reader, IOfxReaderOptions optionsOrNull )
+        public static OfxDocument FromSgmlFile( TextReader reader, IOfxReaderOptions? options )
         {
             if( reader is null ) throw new ArgumentNullException( nameof( reader ) );
 
-            IOfxReaderOptions options = optionsOrNull ?? new DefaultOfxDocumentOptions();
+            options ??= new DefaultOfxDocumentOptions();
 
             // Read the header:
             IReadOnlyDictionary<String,String> header = ReadOfxFileHeaderUntilStartOfSgml( reader );
@@ -98,7 +98,7 @@ namespace OfxSharp
             //
 
             State state = State.BeforeOfxHeader;
-            String line;
+            String? line;
 
             while( ( line = reader.ReadLine() ) != null )
             {
@@ -234,7 +234,9 @@ namespace OfxSharp
             }
         }
 
+#pragma warning disable IDE0060 // Remove unused parameter // `cancellationToken`
         public static async Task<OfxDocument> FromSgmlFileAsync( TextReader reader, CancellationToken cancellationToken = default )
+#pragma warning restore IDE0060
         {
             if( reader is null ) throw new ArgumentNullException( nameof( reader ) );
 

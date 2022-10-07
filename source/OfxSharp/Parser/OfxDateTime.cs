@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
@@ -22,7 +23,7 @@ namespace OfxSharp
         /// <summary>Throws a <see cref="FormatException"/> if <paramref name="s"/> cannot be parsed as an OFX date or datetime.</summary>
         public static DateTimeOffset RequireParseOfxDateTime( this String s )
         {
-            if( TryParseOfxDateTime( s, out DateTimeOffset? value, out String errorMessage ) )
+            if( TryParseOfxDateTime( s, out DateTimeOffset? value, out String? errorMessage ) )
             {
                 if( value.HasValue )
                 {
@@ -46,14 +47,14 @@ namespace OfxSharp
         /// <br />
         /// This method is intended to be chained immediately after <see cref="XmlChildExtensions.GetSingleElementChildTextOrNull"/>.
         /// </summary>
-        public static DateTimeOffset? RequireOptionalParseOfxDateTime( this String s )
+        public static DateTimeOffset? RequireOptionalParseOfxDateTime( this String? s )
         {
             // Unlike `TryParseOfxDateTime`, this `RequireOptionalParseOfxDateTime` method has its own rules for how to handle null/empty/whitespace strings (i.e. returning null instead of throwing):
             if( String.IsNullOrWhiteSpace( s ) )
             {
                 return null;
             }
-            else if( TryParseOfxDateTime( s, out DateTimeOffset? value, out String errorMessage ) )
+            else if( TryParseOfxDateTime( s, out DateTimeOffset? value, out String? errorMessage ) )
             {
                 return value;
             }
@@ -68,7 +69,7 @@ namespace OfxSharp
         /// If <paramref name="s"/> is null/empty/whitespace then this method returns false.<br />
         /// Note that this method will accept all-zeroes as valid, in which case this method will still return <see langword="true"/> *AND* <paramref name="value"/> will be <see langword="null"/>, and <paramref name="errorMessage"/> will also be <see langword="null"/>.
         /// </summary>
-        public static Boolean TryParseOfxDateTime( String s, out DateTimeOffset? value, out String errorMessage )
+        public static Boolean TryParseOfxDateTime( [NotNullWhen(true)] String? s, out DateTimeOffset? value, [NotNullWhen(false)] out String? errorMessage )
         {
             if( String.IsNullOrWhiteSpace( s ) )
             {
@@ -132,7 +133,7 @@ namespace OfxSharp
             return false;
         }
 
-        private static Boolean TryParseOffset( String zoneGroup, out TimeSpan offset, out String zoneName, out String errorMessage )
+        private static Boolean TryParseOffset( String zoneGroup, out TimeSpan offset, [NotNullWhen(true)] out String? zoneName, [NotNullWhen(false)] out String? errorMessage )
         {
             Match zm = _zoneFmt.Match( zoneGroup );
             if( !zm.Success )
@@ -149,7 +150,7 @@ namespace OfxSharp
             }
         }
 
-        private static Boolean TryParseOffset( Match zoneFmtMatch, out TimeSpan offset, out String errorMessage )
+        private static Boolean TryParseOffset( Match zoneFmtMatch, out TimeSpan offset, [NotNullWhen(false)] out String? errorMessage )
         {
             String zoneOffsetHoursStr   = zoneFmtMatch.Groups["hours"]  ?.Value ?? String.Empty;
             String zoneOffsetMinutesStr = zoneFmtMatch.Groups["minutes"]?.Value ?? String.Empty;
@@ -196,7 +197,7 @@ namespace OfxSharp
             }
         }
 
-        private static Boolean TryCreateDateTimeOffset( Match m, TimeSpan offset, out DateTimeOffset? value, out String errorMessage )
+        private static Boolean TryCreateDateTimeOffset( Match m, TimeSpan offset, /*[NotNullWhen(true)]*/ out DateTimeOffset? value, [NotNullWhen(false)] out String? errorMessage )
         {
             Int32 year        = m.Groups["year"   ] is Group yearGrp    && yearGrp   .Success ? ParseInt32( yearGrp   .Value ) : 0;
             Int32 month       = m.Groups["month"  ] is Group monthGrp   && monthGrp  .Success ? ParseInt32( monthGrp  .Value ) : 0;

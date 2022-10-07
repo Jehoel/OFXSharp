@@ -16,7 +16,9 @@ namespace OfxSharp
         /// <param name="encoding">Can be <see langword="null"/>. When <see langword="null"/> this defaults to <see cref="Windows1252"/>.</param>
         /// <param name="options">Can be <see langword="null"/>. When <see langword="null"/> this (eventually) defaults to <see cref="DefaultOfxDocumentOptions.Instance"/>.</param>
         /// <param name="cancellationToken">Not currently used. Will be used after <see cref="StreamReader"/> supports it. See https://github.com/dotnet/runtime/issues/20824</param>
-        public static async Task<OfxDocumentFile> ReadFileAsync( FileInfo ofxFileInfo, Encoding encoding = null, IOfxReaderOptions options = null, CancellationToken cancellationToken = default )
+#pragma warning disable IDE0060 // Remove unused parameter // `cancellationToken`
+        public static async Task<OfxDocumentFile> ReadFileAsync( FileInfo ofxFileInfo, Encoding? encoding = null, IOfxReaderOptions? options = null, CancellationToken cancellationToken = default )
+#pragma warning restore IDE0060
         {
             if( ofxFileInfo is null ) throw new ArgumentNullException( nameof( ofxFileInfo ) );
 
@@ -43,7 +45,7 @@ namespace OfxSharp
         /// <param name="ofxFileInfo">Required. Cannot be <see langword="null"/>.</param>
         /// <param name="encoding">Can be <see langword="null"/>. When <see langword="null"/> this defaults to <see cref="Windows1252"/>.</param>
         /// <param name="options">Can be <see langword="null"/>. When <see langword="null"/> this (eventually) defaults to <see cref="DefaultOfxDocumentOptions.Instance"/>.</param>
-        public static OfxDocumentFile ReadFile( FileInfo ofxFileInfo, Encoding encoding = null, IOfxReaderOptions options = null )
+        public static OfxDocumentFile ReadFile( FileInfo ofxFileInfo, Encoding? encoding = null, IOfxReaderOptions? options = null )
         {
             if( ofxFileInfo is null ) throw new ArgumentNullException( nameof( ofxFileInfo ) );
 

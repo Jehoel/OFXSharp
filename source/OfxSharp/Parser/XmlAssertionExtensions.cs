@@ -12,7 +12,10 @@ namespace OfxSharp
 	{
         public static XmlElement AssertIsElementOneOf( this XmlNode node, params String[] elementNames )
         {
-            if( node is null ) throw new ArgumentNullException( nameof( node ) );
+            if( node         is null ) throw new ArgumentNullException( nameof( node ) );
+            if( elementNames is null ) throw new ArgumentNullException( nameof( elementNames ) );
+
+            //
 
             if( node is XmlElement element && node.NodeType == XmlNodeType.Element )
             {
@@ -31,9 +34,12 @@ namespace OfxSharp
             }
         }
 
-        public static XmlElement AssertIsElement( this XmlNode node, String elementName, String parentElementName = null )
+        public static XmlElement AssertIsElement( this XmlNode node, String elementName, String? parentElementName = null )
         {
-            if( node is null ) throw new ArgumentNullException( nameof( node ) );
+            if( node        is null ) throw new ArgumentNullException( nameof( node ) );
+            if( elementName is null ) throw new ArgumentNullException( nameof( elementName ) );
+
+            //
 
             if( node is XmlElement element && node.NodeType == XmlNodeType.Element )
             {

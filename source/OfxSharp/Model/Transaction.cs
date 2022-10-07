@@ -70,7 +70,7 @@ namespace OfxSharp
         public string TransactionId { get; }
 
         /// <summary>NAME</summary>
-        public string Name { get; }
+        public string? Name { get; }
 
         /// <summary>DTUSER</summary>
         public DateTimeOffset? TransactionInitializationDate { get; }
@@ -79,37 +79,37 @@ namespace OfxSharp
         public DateTimeOffset? FundAvaliabilityDate { get; }
 
         /// <summary>MEMO</summary>
-        public string Memo { get; }
+        public string? Memo { get; }
 
         /// <summary>CORRECTFITID</summary>
-        public string IncorrectTransactionId { get; }
+        public string? IncorrectTransactionId { get; }
 
         /// <summary>CORRECTACTION</summary>
         public TransactionCorrectionType? TransactionCorrectionAction { get; }
 
         /// <summary>SRVRTID</summary>
-        public string ServerTransactionId { get; }
+        public string? ServerTransactionId { get; }
 
         /// <summary>CHECKNUM</summary>
-        public string CheckNum { get; }
+        public string? CheckNum { get; }
 
         /// <summary>REFNUM</summary>
-        public string ReferenceNumber { get; }
+        public string? ReferenceNumber { get; }
 
         /// <summary>SIC</summary>
-        public string Sic { get; }
+        public string? Sic { get; }
 
         /// <summary>PAYEEID</summary>
-        public string PayeeId { get; }
+        public string? PayeeId { get; }
 
         /// <summary><c>BANKACCTTO</c> or <c>CCACCTTO</c> - or <see langword="null"/>.</summary>
-        public Account TransactionSenderAccount { get; }
+        public Account? TransactionSenderAccount { get; }
 
         /// <summary><c>ORIGCURRENCY</c></summary>
-        public string OriginalCurrency { get; }
+        public string? OriginalCurrency { get; }
 
         /// <summary><c>CURRENCY</c></summary>
-        public string Currency { get; }
+        public string? Currency { get; }
 
         /// <summary>
         /// <c>CURDEF</c> (defined outside of &lt;STMTTRN&gt;)<br />

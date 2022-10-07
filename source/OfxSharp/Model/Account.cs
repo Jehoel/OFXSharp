@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Xml;
 
 namespace OfxSharp
@@ -6,7 +7,17 @@ namespace OfxSharp
     /// <summary>11.3.1 Banking Account <c>&lt;BANKACCTFROM&gt;</c>, <c>&lt;BANKACCTTO&gt;</c>, <c>&lt;CCACCTFROM&gt;</c></summary>
     public abstract class Account
     {
-        public static Account FromXmlElementOrNull( XmlElement accountElementOrNull )
+        public static Account FromXmlElement( XmlElement accountElement )
+        {
+            if( accountElement is null ) throw new ArgumentNullException( nameof(accountElement) );
+
+            //
+
+            return FromXmlElementOrNull( accountElement );
+        }
+
+        [return: NotNullIfNotNull( "accountElementOrNull" )]
+        public static Account? FromXmlElementOrNull( XmlElement? accountElementOrNull )
         {
             if( accountElementOrNull is null )
             {
@@ -52,23 +63,23 @@ namespace OfxSharp
         public string ElementName { get; }
 
         /// <summary><c>ACCTID</c>. Can be <see langword="null"/>.</summary>
-        public string AccountId   { get; }
+        public string? AccountId   { get; }
 
         /// <summary><c>ACCTKEY</c> Can be <see langword="null"/>.</summary>
-        public string AccountKey  { get; }
+        public string? AccountKey  { get; }
 
 //      /// <summary>Varies based on <c>BANKACCTFROM</c> or <c>BANKACCTTO</c> or <c>CCACCTFROM</c></summary>
 //      public AccountType AccountType { get; }
 
         //
 
-        public Boolean IsBankAccount( out BankAccount self )
+        public Boolean IsBankAccount( [NotNullWhen(true)] out BankAccount? self )
         {
             self = this as BankAccount;
             return self != null;
         }
 
-        public Boolean IsCreditAccount( out CreditAccount self )
+        public Boolean IsCreditAccount( [NotNullWhen(true)] out CreditAccount? self )
         {
             self = this as CreditAccount;
             return self != null;
@@ -93,10 +104,10 @@ namespace OfxSharp
             }
 
             /// <summary>BANKID</summary>
-            public string BankId { get; }
+            public string? BankId { get; }
 
             /// <summary>BRANCHID</summary>
-            public string BranchId { get; }
+            public string? BranchId { get; }
 
             // ACCTID inherited
 
@@ -109,7 +120,7 @@ namespace OfxSharp
             //
 
             /// <summary><c>&lt;EXTBANKACCTTO&gt;?</c><br />With child elements (SGML content): <c>(BANKNAME?, BANKBRANCH?, BANKCITY?, BANKPOSTALCODE?, CHE.PTTACCTID?)</c></summary>
-            public XmlElement ExtBankAccountTo { get; }
+            public XmlElement? ExtBankAccountTo { get; }
         }
 
         /// <summary><c>&lt;CCACCTFROM&gt;</c> and <c>&lt;CCACCTTO&gt;</c></summary>
@@ -141,7 +152,7 @@ namespace OfxSharp
             // ACCTID inherited
 
             /// <summary>BROKERID</summary>
-            public string BrokerId { get; }
+            public string? BrokerId { get; }
         }
 
         /// <summary><c>&lt;PRESACCTFROM&gt;</c> and <c>&lt;PRESACCTTO&gt;</c></summary>
@@ -164,19 +175,19 @@ namespace OfxSharp
             // ACCTID inherited
 
             /// <summary>BILLPUB</summary>
-            public string BILLPUB { get; }
+            public string? BILLPUB { get; }
 
             /// <summary>BILLERID</summary>
-            public string BILLERID { get; }
+            public string? BILLERID { get; }
 
             /// <summary>BILLERNAME</summary>
-            public string BILLERNAME { get; }
+            public string? BILLERNAME { get; }
 
             /// <summary>PRESNAMEADDRESS</summary>
-            public string PRESNAMEADDRESS { get; }
+            public string? PRESNAMEADDRESS { get; }
 
             /// <summary>USERID</summary>
-            public string USERID { get; }
+            public string? USERID { get; }
         }
 
         #endregion

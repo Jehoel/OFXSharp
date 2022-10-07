@@ -54,7 +54,7 @@ namespace OfxSharp
             }
         }
 
-        public static XmlElement GetSingleElementChildOrNull( this XmlElement element, String childElementName, Boolean allowDotsInElementName = false )
+        public static XmlElement? GetSingleElementChildOrNull( this XmlElement element, String childElementName, Boolean allowDotsInElementName = false )
         {
             if( element is null ) throw new ArgumentNullException( nameof( element ) );
             if( String.IsNullOrWhiteSpace( childElementName ) ) throw new ArgumentException( message: "Value cannot be null/empty/whitespace.", paramName: nameof(childElementName) );
@@ -76,7 +76,7 @@ namespace OfxSharp
 
             //
 
-            XmlNode child = element.SelectSingleNode( childElementName );
+            XmlNode? child = element.SelectSingleNode( childElementName );
             if( child is XmlElement childElement )
             {
                 if( childElement.LocalName == childElementName )
@@ -143,7 +143,7 @@ namespace OfxSharp
         }
 
         /// <summary>Consider chaining this method directly to <see cref="OfxDateTime.RequireOptionalParseOfxDateTime(String)"/>.</summary>
-        public static String GetSingleElementChildTextOrNull( this XmlElement element, String childElementName )
+        public static String? GetSingleElementChildTextOrNull( this XmlElement element, String childElementName )
         {
             return element.GetSingleElementChildOrNull( childElementName )?.RequireSingleTextChildNode();
         }

@@ -10,34 +10,37 @@ namespace OfxSharp
     /// &quot;The &lt;STMTRS&gt; response must appear within a &lt;STMTTRNRS&gt; transaction wrapper.&quot; (the &quot;transaction&quot; refers to the OFX request/response transaction - not a bank transaction).</summary>
     public class OfxStatementResponse
     {
-        /// <param name="stmtrnrs">Required. Cannot be <see langword="null"/>. Must be a <c>&lt;BANKMSGSRSV1&gt;</c> element.</param>
+        /// <param name="stmtTrnRs">Required. Cannot be <see langword="null"/>. Must be a <c>&lt;BANKMSGSRSV1&gt;&lt;STMTTRNRS&gt;</c> element.</param>
         /// <param name="culture">Required. Cannot be <see langword="null"/>.</param>
-        public static OfxStatementResponse FromSTMTTRNRS( XmlElement stmtrnrs, CultureInfo culture )
+        public static OfxStatementResponse FromSTMTTRNRS( XmlElement stmtTrnRs, CultureInfo culture )
         {
-            if( stmtrnrs is null ) throw new ArgumentNullException( nameof( stmtrnrs ) );
-            if( culture  is null ) throw new ArgumentNullException( nameof( culture ) );
+            if( stmtTrnRs is null ) throw new ArgumentNullException( nameof( stmtTrnRs ) );
+            if( culture   is null ) throw new ArgumentNullException( nameof( culture ) );
 
             //
 
-            _ = stmtrnrs.AssertIsElement( "STMTTRNRS", parentElementName: "BANKMSGSRSV1" );
+            _ = stmtTrnRs.AssertIsElement( "STMTTRNRS", parentElementName: "BANKMSGSRSV1" );
 
-            XmlElement stmtrs    = stmtrnrs.RequireSingleElementChild("STMTRS");
-            XmlElement transList = stmtrs  .RequireSingleElementChild("BANKTRANLIST");
+            XmlElement  status          = stmtTrnRs.RequireSingleElementChild  ( "STATUS"       );
+            XmlElement  stmtrs          = stmtTrnRs.RequireSingleElementChild  ( "STMTRS"       );
+            XmlElement  transList       = stmtrs   .RequireSingleElementChild  ( "BANKTRANLIST" );
+            XmlElement  bankAccountFrom = stmtrs   .RequireSingleElementChild  ( "BANKACCTFROM" );
+            XmlElement  ledgerBal       = stmtrs   .RequireSingleElementChild  ( "LEDGERBAL"    );
+            XmlElement? availBal        = stmtrs   .GetSingleElementChildOrNull( "AVAILBAL"     );
 
-            //
-
-            String defaultCurrency = stmtrs.RequireSingleElementChildText("CURDEF");
+            String trnUid          = stmtTrnRs.RequireSingleElementChildText( "TRNUID" );
+            String defaultCurrency = stmtrs   .RequireSingleElementChildText( "CURDEF" );
 
             return new OfxStatementResponse(
-                trnUid           : stmtrnrs.RequireSingleElementChildText("TRNUID"),
-                responseStatus   : OfxStatus.FromXmlElement( stmtrnrs.RequireSingleElementChild("STATUS") ),
+                trnUid           : trnUid,
+                responseStatus   : OfxStatus.FromXmlElement( status ),
                 defaultCurrency  : defaultCurrency,
-                accountFrom      : Account.FromXmlElementOrNull( stmtrs.GetSingleElementChildOrNull("BANKACCTFROM") ),
-                transactionsStart: transList.RequireSingleElementChildText("DTSTART").RequireParseOfxDateTime(),
-                transactionsEnd  : transList.RequireSingleElementChildText("DTEND"  ).RequireParseOfxDateTime(),
+                accountFrom      : Account.FromXmlElement( bankAccountFrom ),
+                transactionsStart: transList.RequireSingleElementChildText( "DTSTART" ).RequireParseOfxDateTime(),
+                transactionsEnd  : transList.RequireSingleElementChildText( "DTEND"   ).RequireParseOfxDateTime(),
                 transactions     : GetTransactions( transList, defaultCurrency, culture ),
-                ledgerBalance    : Balance.FromXmlElementOrNull( stmtrs.GetSingleElementChildOrNull("LEDGERBAL"), culture ),
-                availableBalance : Balance.FromXmlElementOrNull( stmtrs.GetSingleElementChildOrNull("AVAILBAL" ), culture )
+                ledgerBalance    : Balance.FromXmlElement     ( ledgerBal, culture ),
+                availableBalance : Balance.FromXmlElementOrNull( availBal, culture )
             );
         }
 
@@ -48,8 +51,13 @@ namespace OfxSharp
         {
             _ = ccStmtTrnRs.AssertIsElement( "CCSTMTTRNRS", parentElementName: "CREDITCARDMSGSRSV1" );
 
-            XmlElement stmtrs    = ccStmtTrnRs.RequireSingleElementChild("CCSTMTRS");
-            XmlElement transList = stmtrs  .RequireSingleElementChild("BANKTRANLIST");
+            XmlElement  status     = ccStmtTrnRs.RequireSingleElementChild  ( "STATUS"       );
+            XmlElement  stmtrs     = ccStmtTrnRs.RequireSingleElementChild  ( "CCSTMTRS"     );
+            XmlElement  transList  = stmtrs     .RequireSingleElementChild  ( "BANKTRANLIST" );
+            XmlElement  ccAcctFrom = stmtrs     .RequireSingleElementChild  ( "CCACCTFROM"   );
+            XmlElement  ledgerBal  = stmtrs     .RequireSingleElementChild  ( "LEDGERBAL"    );
+            XmlElement? availBal   = stmtrs     .GetSingleElementChildOrNull( "AVAILBAL"     );
+
 
             //
 
@@ -57,14 +65,14 @@ namespace OfxSharp
 
             return new OfxStatementResponse(
                 trnUid           : ccStmtTrnRs.RequireSingleElementChildText( "TRNUID" ),
-                responseStatus   : OfxStatus.FromXmlElement( ccStmtTrnRs.RequireSingleElementChild("STATUS") ),
+                responseStatus   : OfxStatus.FromXmlElement( status ),
                 defaultCurrency  : defaultCurrency,
-                accountFrom      : Account.FromXmlElementOrNull( stmtrs.GetSingleElementChildOrNull("CCACCTFROM") ),
+                accountFrom      : Account.FromXmlElement( ccAcctFrom ),
                 transactionsStart: transList.RequireSingleElementChildText( "DTSTART").RequireParseOfxDateTime(),
                 transactionsEnd  : transList.RequireSingleElementChildText( "DTEND"  ).RequireParseOfxDateTime(),
                 transactions     : GetTransactions( transList, defaultCurrency, culture ),
-                ledgerBalance    : Balance.FromXmlElementOrNull( stmtrs.GetSingleElementChildOrNull("LEDGERBAL"), culture ),
-                availableBalance : Balance.FromXmlElementOrNull( stmtrs.GetSingleElementChildOrNull("AVAILBAL" ), culture )
+                ledgerBalance    : Balance.FromXmlElement      ( ledgerBal, culture ),
+                availableBalance : Balance.FromXmlElementOrNull( availBal , culture )
             );
         }
 
@@ -96,19 +104,21 @@ namespace OfxSharp
             DateTimeOffset           transactionsEnd,
             IEnumerable<Transaction> transactions,
             Balance                  ledgerBalance,
-            Balance                  availableBalance
+            Balance?                 availableBalance
         )
         {
             this.OfxTransactionUniqueId = trnUid;
-            this.ResponseStatus         = responseStatus   ?? throw new ArgumentNullException( nameof( responseStatus ) );
-            this.DefaultCurrency        = defaultCurrency  ?? throw new ArgumentNullException( nameof( defaultCurrency ) );
-            this.AccountFrom            = accountFrom      ?? throw new ArgumentNullException( nameof( accountFrom ) );
+            this.ResponseStatus         = responseStatus   ?? throw new ArgumentNullException( nameof(responseStatus) );
+            this.DefaultCurrency        = defaultCurrency  ?? throw new ArgumentNullException( nameof(defaultCurrency) );
+            this.AccountFrom            = accountFrom      ?? throw new ArgumentNullException( nameof(accountFrom) );
             this.TransactionsStart      = transactionsStart;
             this.TransactionsEnd        = transactionsEnd;
-            this.LedgerBalance          = ledgerBalance    ?? throw new ArgumentNullException( nameof( ledgerBalance ) );
+            this.LedgerBalance          = ledgerBalance    ?? throw new ArgumentNullException( nameof(ledgerBalance) );
             this.AvailableBalance       = availableBalance;
 
-            this.Transactions.AddRange( transactions );
+            if( transactions is null ) throw new ArgumentNullException( nameof(transactions) );
+
+            this.transactionsList.AddRange( transactions );
         }
 
         /// <summary>STMTTRNRS/TRNUID (OFX Request/Response Transaction ID - this is unrelated to bank transactions).<br />&quot;Client-Assigned Transaction UID&quot; - Described as an alphanumeric field (i.e. a <see cref="string"/>) with a maximum possible length of 36 chars. Values consisting of a single zero character have special meaning (in some OFX contexts, but not in .ofx files, surely?) and are valid.</summary>
@@ -129,13 +139,15 @@ namespace OfxSharp
         /// <summary>STMTTRNRS/STMTRS/BANKTRANLIST/DTEND</summary>
         public DateTimeOffset TransactionsEnd   { get; }
 
+        private readonly List<Transaction> transactionsList = new List<Transaction>();
+
         /// <summary>STMTTRNRS/STMTRS/BANKTRANLIST</summary>
-        public List<Transaction> Transactions { get; } = new List<Transaction>();
+        public IReadOnlyList<Transaction> Transactions => this.transactionsList;
 
         /// <summary>STMTTRNRS/STMTRS/LEDGERBAL. Required.</summary>
         public Balance LedgerBalance { get; }
 
         /// <summary>STMTTRNRS/STMTRS/AVAILBAL. Optional. Can be null.</summary>
-        public Balance AvailableBalance { get; }
+        public Balance? AvailableBalance { get; }
     }
 }

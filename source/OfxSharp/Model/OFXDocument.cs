@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Xml;
 
@@ -100,9 +101,6 @@ namespace OfxSharp
 
         #endregion
 
-        /// <summary></summary>
-        /// <param name="signOn"></param>
-        /// <param name="statements"></param>
         /// <param name="culture">The <see cref="CultureInfo"/> used to parse values in the serialized OFX SGML - or if this is an in-memory <see cref="OfxDocument"/> not being constructed from a file, then it's whatever culture the consuming code wants to associate with this <see cref="OfxDocument"/>. Exposed via <see cref="Culture"/>.</param>
         public OfxDocument( SignOnResponse signOn, IEnumerable<OfxStatementResponse> statements, CultureInfo culture )
         {
@@ -131,7 +129,7 @@ namespace OfxSharp
         //
 
         /// <summary>Utility method to allow library consumers to more easily handle the simpler and more common case of single-statement OFX files. This method returns false if this <see cref="OfxDocument"/> is a multi-statement OFX file.</summary>
-        public Boolean HasSingleStatement( out SingleStatementOfxDocument doc )
+        public Boolean HasSingleStatement( [NotNullWhen(true)] out SingleStatementOfxDocument? doc )
         {
             if( this.Statements.Count == 1 )
             {
