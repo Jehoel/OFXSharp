@@ -64,7 +64,7 @@ namespace OfxSharp
         /// <summary>This method always uses <see cref="CultureInfo.InvariantCulture"/>.</summary>
         public static Int32 RequireParseInt32Inv(this string s)
         {
-            if( s       is null ) throw new ArgumentNullException( nameof( s ) );
+            if( s is null ) throw new ArgumentNullException( nameof( s ) );
 
             //
 

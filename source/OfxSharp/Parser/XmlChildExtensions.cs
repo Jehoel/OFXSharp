@@ -116,15 +116,24 @@ namespace OfxSharp
         {
             if( element is null ) throw new ArgumentNullException( nameof( element ) );
 
-            XmlNode singleChild = element.ChildNodes.Cast<XmlNode>().Single();
-            if( singleChild.NodeType == XmlNodeType.Text && singleChild is XmlText xmlText )
+            IEnumerable<XmlNode> childNodes = element.ChildNodes.Cast<XmlNode>();
+            Int32 childNodesCount = childNodes.Count();
+            if( childNodesCount == 1 )
             {
-                String value = xmlText.Value.Trim();
-                return value;
+                XmlNode singleChild = childNodes.Single();
+                if( singleChild.NodeType == XmlNodeType.Text && singleChild is XmlText xmlText )
+                {
+                    String value = xmlText.Value.Trim();
+                    return value;
+                }
+                else
+                {
+                    throw new OfxException( message: "Expected a single #text child node but encountered {1} <{2}> instead.".Fmt( singleChild.NodeType, singleChild.LocalName ) );
+                }
             }
             else
             {
-                throw new OfxException( message: "Expected a single #text child node but encountered {1} <{2}> instead.".Fmt( singleChild.NodeType, singleChild.LocalName ) );
+                throw new OfxException( message: "Expected <{0}> to have a single #text child node but encountered {1:N0} child nodes instead.".Fmt( element.LocalName, childNodesCount ) );
             }
         }
 

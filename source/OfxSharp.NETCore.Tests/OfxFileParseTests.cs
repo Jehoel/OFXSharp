@@ -144,7 +144,7 @@ namespace OfxSharp.NETCore.Tests
 
             {
                 OfxStatementResponse stmt = ofx.Statements.Single( st => st.AccountFrom.AccountId == "1111111111" );
-                AsertBankAccount( stmt, bankId: "USA", accountId: "1111111111", BankAccountType.SAVINGS );
+                AsertBankAccount( stmt, bankId: "USA", accountId: "1111111111", BankAccountType.SAVINGS, availableBalance: 5567.98M, ledgerBalance: 5572.98M );
                 AsertCommonSecondLudditeStatement( stmt, txnCount: 3, ledgerBal: 5572.98M, availableBal: 5567.98M );
 
                 {
@@ -180,7 +180,7 @@ namespace OfxSharp.NETCore.Tests
 
             {
                 OfxStatementResponse stmt = ofx.Statements.Single( st => st.AccountFrom.AccountId == "2222222222" );
-                AsertBankAccount( stmt, bankId: "USA", accountId: "2222222222", BankAccountType.CHECKING );
+                AsertBankAccount( stmt, bankId: "USA", accountId: "2222222222", BankAccountType.CHECKING, availableBalance: 5678.74M, ledgerBalance: 5678.74M );
                 AsertCommonSecondLudditeStatement( stmt, txnCount: 2, ledgerBal: 5678.74M, availableBal: 5678.74M );
 
                 {
@@ -206,19 +206,19 @@ namespace OfxSharp.NETCore.Tests
 
             {
                 OfxStatementResponse stmt = ofx.Statements.Single( st => st.AccountFrom.AccountId == "3333333333" );
-                AsertBankAccount( stmt, bankId: "USA", accountId: "3333333333", BankAccountType.CHECKING );
+                AsertBankAccount( stmt, bankId: "USA", accountId: "3333333333", BankAccountType.CHECKING, availableBalance: 123.39M, ledgerBalance: 123.39M );
                 AsertCommonSecondLudditeStatement( stmt, txnCount: 2, ledgerBal: 123.39M, availableBal: 123.39M );
             }
 
             {
                 OfxStatementResponse stmt = ofx.Statements.Single( st => st.AccountFrom.AccountId == "4444444444" );
-                AsertBankAccount( stmt, bankId: "USA", accountId: "4444444444", BankAccountType.CHECKING );
-                AsertCommonSecondLudditeStatement( stmt, txnCount: 3, ledgerBal: 7007.02m, availableBal: 7007.02m );
+                AsertBankAccount( stmt, bankId: "USA", accountId: "4444444444", BankAccountType.CHECKING, availableBalance: 7007.02M, ledgerBalance: 7007.02M );
+                AsertCommonSecondLudditeStatement( stmt, txnCount: 3, ledgerBal: 7007.02M, availableBal: 7007.02M );
             }
 
             {
                 OfxStatementResponse stmt = ofx.Statements.Single( st => st.AccountFrom.AccountId == "5555555555555555" );
-                AsertBankAccount( stmt, bankId: "USA", accountId: "5555555555555555", BankAccountType.CREDITLINE ); // Even though this is a credit-card account with `<ACCTTYPE>CREDITLINE`, the bank's OFX lists it with `<BANKACCTFROM>` instead of `<CCACCTFROM>` so the Account subtype will still be BankAccount and not CreditAccount
+                AsertBankAccount( stmt, bankId: "USA", accountId: "5555555555555555", BankAccountType.CREDITLINE, availableBalance: null, ledgerBalance: -2276.68M ); // Even though this is a credit-card account with `<ACCTTYPE>CREDITLINE`, the bank's OFX lists it with `<BANKACCTFROM>` instead of `<CCACCTFROM>` so the Account subtype will still be BankAccount and not CreditAccount
                 AsertCommonSecondLudditeStatement( stmt, txnCount: 2, ledgerBal: -2276.68M, availableBal: null );
 
                 stmt.Transactions[0].Name.Should().Be( "Ext Credit Card Debit SOYLENT" );
@@ -232,13 +232,13 @@ namespace OfxSharp.NETCore.Tests
 
             {
                 OfxStatementResponse stmt = ofx.Statements.Single( st => st.AccountFrom.AccountId == "6666666666" );
-                AsertBankAccount( stmt, bankId: "USA", accountId: "6666666666", BankAccountType.CHECKING );
+                AsertBankAccount( stmt, bankId: "USA", accountId: "6666666666", BankAccountType.CHECKING, availableBalance: 775016.85M, ledgerBalance: 775016.85M );
                 AsertCommonSecondLudditeStatement( stmt, txnCount: 3, ledgerBal: 775016.85M, availableBal: 775016.85M );
             }
 
             {
                 OfxStatementResponse stmt = ofx.Statements.Single( st => st.AccountFrom.AccountId == "7777777777" );
-                AsertBankAccount( stmt, bankId: "USA", accountId: "7777777777", BankAccountType.SAVINGS );
+                AsertBankAccount( stmt, bankId: "USA", accountId: "7777777777", BankAccountType.SAVINGS, availableBalance: 0.04M, ledgerBalance:  6.03M );
                 AsertCommonSecondLudditeStatement( stmt, txnCount: 0, ledgerBal: 6.03M, availableBal: 0.04M );
             }
         }
@@ -300,16 +300,44 @@ namespace OfxSharp.NETCore.Tests
             // Well, I can see it might be barely acceptable if the spec required clients to always use cryptographically-secure long random (and so unpredictable) TRNUID values, but this is not mentioned in the OFX 1.6 doc. UPDATE: Oh, it does have a minor advisory in a subsequent paragraph, but it's very, very weakly worded, ugh.
         }
 
-        private static void AsertBankAccount( OfxStatementResponse stmt, String bankId, String accountId, BankAccountType bankAccountType )
+        private static void AsertBankAccount( OfxStatementResponse stmt, String bankId, String accountId, BankAccountType bankAccountType, Decimal? availableBalance = null, Decimal? ledgerBalance = null )
         {
-            Account.BankAccount bankAccount = stmt.AccountFrom.Should().BeOfType<Account.BankAccount>().Subject;
-            bankAccount.BankId         .Should().Be( bankId );
-            bankAccount.BranchId       .Should().BeNull();
+            Account accountElement = stmt.AccountFrom;
 
-            bankAccount.AccountId      .Should().Be( accountId );
-            bankAccount.AccountKey     .Should().BeNull();
-            bankAccount.AccountType    .Should().Be( AccountType.BANK );
-            bankAccount.BankAccountType.Should().Be( bankAccountType );
+            Account.BankAccount bankAccount = accountElement.Should().BeOfType<Account.BankAccount>().Subject;
+
+            {
+                bankAccount.BankId         .Should().Be( bankId );
+                bankAccount.BranchId       .Should().BeNull();
+
+                bankAccount.AccountId      .Should().Be( accountId );
+                bankAccount.AccountKey     .Should().BeNull();
+                bankAccount.BankAccountType.Should().Be( bankAccountType );
+            }
+
+            //
+
+            if( availableBalance.HasValue )
+            {
+                stmt.AvailableBalance.Should().NotBeNull();
+                stmt.AvailableBalance.Amount.Should().Be( availableBalance.Value );
+            }
+            else
+            {
+                stmt.AvailableBalance.Should().BeNull();
+            }
+
+            //
+
+            if( ledgerBalance.HasValue )
+            {
+                stmt.LedgerBalance.Should().NotBeNull();
+                stmt.LedgerBalance.Amount.Should().Be( ledgerBalance.Value );
+            }
+            else
+            {
+                stmt.LedgerBalance.Should().BeNull();
+            }
         }
 
         /// <summary>Tests for support for QFX's elements <c>&lt;INTU.BID&gt;</c> and <c>&lt;INTU.USERID&gt;</c> (neither of which are in OFX 1.6).</summary>
@@ -332,43 +360,11 @@ namespace OfxSharp.NETCore.Tests
 
             //
 
-            ofx.Statements[0].AvailableBalance.Amount.Should().Be( 68.65M );
-            ofx.Statements[0].LedgerBalance   .Amount.Should().Be( 73.65M );
-
-            ofx.Statements[0].AccountFrom.AccountId  .Should().Be( "1111111111" );
-            ofx.Statements[0].AccountFrom.AccountType.Should().Be( "SAVINGS" );
-
-            //
-
-            ofx.Statements[1].AvailableBalance.Amount.Should().Be( 5652.55M );
-            ofx.Statements[1].LedgerBalance   .Amount.Should().Be( 5652.55M );
-
-            ofx.Statements[1].AccountFrom.AccountId  .Should().Be( "3333444455" );
-            ofx.Statements[1].AccountFrom.AccountType.Should().Be( "CHECKING" );
-
-            //
-
-            ofx.Statements[2].AvailableBalance.Amount.Should().Be( 93.51M );
-            ofx.Statements[2].LedgerBalance   .Amount.Should().Be( 93.51M );
-
-            ofx.Statements[2].AccountFrom.AccountId  .Should().Be( "2222333344" );
-            ofx.Statements[2].AccountFrom.AccountType.Should().Be( "CHECKING" );
-
-            //
-
-            ofx.Statements[3].AvailableBalance.Amount.Should().Be( 7.33M );
-            ofx.Statements[3].LedgerBalance   .Amount.Should().Be( 7.33M );
-
-            ofx.Statements[3].AccountFrom.AccountId  .Should().Be( "5555666677" );
-            ofx.Statements[3].AccountFrom.AccountType.Should().Be( "CHECKING" );
-
-            //
-
-            ofx.Statements[4].AvailableBalance.Should().BeNull();
-            ofx.Statements[4].LedgerBalance   .Amount.Should().Be( -412.16M );
-
-            ofx.Statements[4].AccountFrom.AccountId  .Should().Be( "1234123412341234" );
-            ofx.Statements[4].AccountFrom.AccountType.Should().Be( "CREDITLINE" );
+            AsertBankAccount( ofx.Statements[0], bankId: "9999-88888", accountId: "1111111111"      , BankAccountType.SAVINGS   , availableBalance:   68.65M, ledgerBalance:   73.65M );
+            AsertBankAccount( ofx.Statements[1], bankId: "9999-88888", accountId: "3333444455"      , BankAccountType.CHECKING  , availableBalance: 5652.55M, ledgerBalance: 5652.55M );
+            AsertBankAccount( ofx.Statements[2], bankId: "9999-88888", accountId: "2222333344"      , BankAccountType.CHECKING  , availableBalance:   93.51M, ledgerBalance:   93.51M );
+            AsertBankAccount( ofx.Statements[3], bankId: "9999-88888", accountId: "5555666677"      , BankAccountType.CHECKING  , availableBalance:    7.33M, ledgerBalance:    7.33M );
+            AsertBankAccount( ofx.Statements[4], bankId: "9999-88888", accountId: "1234123412341234", BankAccountType.CREDITLINE, availableBalance:     null, ledgerBalance: -412.16M );
         }
     }
 

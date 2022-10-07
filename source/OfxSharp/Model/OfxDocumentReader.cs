@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 
@@ -186,8 +187,9 @@ namespace OfxSharp
                 return doc;
             }
 #pragma warning disable IDE0059 // Unnecessary assignment of a value // The `ex` variable exists to assist debugging.
+#pragma warning disable CS0168 // Variable is declared but never used
             catch( Exception ex )
-#pragma warning restore IDE0059
+#pragma warning restore
             {
                 throw;
             }
@@ -224,21 +226,21 @@ namespace OfxSharp
 
         #region Async
 
-        public static async Task<OfxDocument> FromSgmlFileAsync( Stream stream )
+        public static async Task<OfxDocument> FromSgmlFileAsync( Stream stream, CancellationToken cancellationToken = default )
         {
-            using( StreamReader rdr = new StreamReader( stream ) )
+            using( StreamReader rdr = new StreamReader( stream, detectEncodingFromByteOrderMarks: true ) )
             {
-                return await FromSgmlFileAsync( reader: rdr ).ConfigureAwait(false);
+                return await FromSgmlFileAsync( reader: rdr, cancellationToken ).ConfigureAwait(false);
             }
         }
 
-        public static async Task<OfxDocument> FromSgmlFileAsync( TextReader reader )
+        public static async Task<OfxDocument> FromSgmlFileAsync( TextReader reader, CancellationToken cancellationToken = default )
         {
             if( reader is null ) throw new ArgumentNullException( nameof( reader ) );
 
             // HACK: Honestly, it's easier just to buffer it all first:
 
-            String text = await reader.ReadToEndAsync().ConfigureAwait(false);
+            String text = await reader.ReadToEndAsync(/*cancellationToken*/).ConfigureAwait(false);
 
             using( StringReader sr = new StringReader( text ) )
             {

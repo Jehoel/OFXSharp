@@ -30,7 +30,7 @@ namespace OfxSharp
             using( FileStream fs = new FileStream( path: ofxFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 1 * 1024 * 1024, useAsync: true ) )
             using( StreamReader rdr = new StreamReader( fs, encoding ) )
             {
-                fileText = await rdr.ReadToEndAsync().ConfigureAwait(false); // Grumble: https://github.com/dotnet/runtime/issues/20824 // "Add CancellationToken to StreamReader.Read* methods"
+                fileText = await rdr.ReadToEndAsync(/*cancellationToken*/).ConfigureAwait(false); // Grumble: https://github.com/dotnet/runtime/issues/20824 // "Add CancellationToken to StreamReader.Read* methods"
             }
 
             using( StringReader fileTextStringReader = new StringReader( fileText ) )

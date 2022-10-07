@@ -1,19 +1,37 @@
-﻿using System.ComponentModel;
+﻿using System.Runtime.Serialization;
+using System.ComponentModel;
 
 namespace OfxSharp
 {
+    /// <summary>Combines <c>ACCOUNTENUM</c> and <c>ACCOUNTENUM2</c>.</summary>
+    /// <remarks>All members, except <see cref="CMA"/>, are present in both <c>ACCOUNTENUM</c> and <c>ACCOUNTENUM2</c> (while <see cref="CMA"/> is exclusive to <c>ACCOUNTENUM2</c>).</remarks>
     public enum BankAccountType
     {
-        [Description("Checking Account")] CHECKING,
+        [EnumMember( Value = "CHECKING" )]
+        [Description("Checking Account")]
+        CHECKING,
 
-        [Description("Savings Account")] SAVINGS,
+        [EnumMember( Value = "SAVINGS" )]
+        [Description("Savings Account")]
+        SAVINGS,
 
-        [Description("Money Market Account")] MONEYMRKT,
+        [EnumMember( Value = "MONEYMRKT" )]
+        [Description("Money Market Account")]
+        MONEYMRKT,
 
-        [Description("Line of Credit")] CREDITLINE,
+        [EnumMember( Value = "CREDITLINE" )]
+        [Description("Line of Credit")]
+        CREDITLINE,
 
+        [EnumMember( Value = "NA" )]
         NA,
 
-        [Description("Home Loan")] HOMELOAN
+        [EnumMember( Value = "HOMELOAN" )]
+        [Description("Home Loan")]
+        HOMELOAN,
+
+        [EnumMember( Value = "CMA" )]
+        [Description("CMA")]
+        CMA
     }
 }
